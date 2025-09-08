@@ -1,19 +1,34 @@
-import { useNetwork } from 'wagmi';
-import { SAFE_VAULT_ADDRESSES, SAFE_VAULT_ABI } from '../utils/contracts';
+import { useChainId } from 'wagmi';
+import { SAFE_VAULT_ADDRESSES, SAFE_VAULT_ABI, MOCK_LIDO_ADDRESSES, MOCK_LIDO_ABI } from '../utils/contracts';
 
 export const useContract = () => {
-  const { chain } = useNetwork();
+  const chainId = useChainId();
 
   const getContractAddress = () => {
-    if (!chain) return undefined;
+    if (!chainId) return undefined;
     
-    switch (chain.id) {
+    switch (chainId) {
       case 1: // Mainnet
         return SAFE_VAULT_ADDRESSES.MAINNET;
-      case 5: // Goerli
-        return SAFE_VAULT_ADDRESSES.GOERLI;
       case 11155111: // Sepolia
         return SAFE_VAULT_ADDRESSES.SEPOLIA;
+      case 31337: // Local development (Anvil)
+        return SAFE_VAULT_ADDRESSES.LOCAL;
+      default:
+        return undefined;
+    }
+  };
+
+  const getMockLidoAddress = () => {
+    if (!chainId) return undefined;
+    
+    switch (chainId) {
+      case 1: // Mainnet
+        return MOCK_LIDO_ADDRESSES.MAINNET;
+      case 11155111: // Sepolia
+        return MOCK_LIDO_ADDRESSES.SEPOLIA;
+      case 31337: // Local development (Anvil)
+        return MOCK_LIDO_ADDRESSES.LOCAL;
       default:
         return undefined;
     }
@@ -24,7 +39,13 @@ export const useContract = () => {
     abi: SAFE_VAULT_ABI,
   };
 
+  const mockLidoContract = {
+    address: getMockLidoAddress(),
+    abi: MOCK_LIDO_ABI,
+  };
+
   return {
     safeVaultContract,
+    mockLidoContract,
   };
 };

@@ -1,118 +1,180 @@
-import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
+import { useAccount, useContractRead, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useContract } from './useContract';
 import { parseEther } from 'ethers';
+import { useState, useEffect, useCallback } from 'react';
 
 export const useSafeVault = () => {
   const { address } = useAccount();
   const { safeVaultContract } = useContract();
+  
+  // Loading states
+  const [isDepositPending, setIsDepositPending] = useState(false);
+  const [isWithdrawPrincipalPending, setIsWithdrawPrincipalPending] = useState(false);
+  const [isWithdrawYieldPending, setIsWithdrawYieldPending] = useState(false);
 
-  // Read functions
-  const { data: principalBalance = 0n } = useContractRead({
-    address: safeVaultContract?.address,
+  // Read functions with refetch capabilities
+  const { data: principalBalance = 0n, refetch: refetchPrincipalBalance } = useContractRead({
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'getUserPrincipal',
     args: address ? [address] : undefined,
-    enabled: !!address,
+    query: {
+      enabled: !!address,
+    },
   });
 
-  const { data: yieldBalance = 0n } = useContractRead({
-    address: safeVaultContract?.address,
+  const { data: yieldBalance = 0n, refetch: refetchYieldBalance } = useContractRead({
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'getUserYield',
     args: address ? [address] : undefined,
-    enabled: !!address,
+    query: {
+      enabled: !!address,
+    },
   });
 
-  const { data: totalBalance = 0n } = useContractRead({
-    address: safeVaultContract?.address,
+  const { data: totalBalance = 0n, refetch: refetchTotalBalance } = useContractRead({
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'getUserTotalBalance',
     args: address ? [address] : undefined,
-    enabled: !!address,
+    query: {
+      enabled: !!address,
+    },
   });
 
-  const { data: totalPrincipal = 0n } = useContractRead({
-    address: safeVaultContract?.address,
+  const { data: totalPrincipal = 0n, refetch: refetchTotalPrincipal } = useContractRead({
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'totalPrincipal',
   });
 
-  const { data: totalYield = 0n } = useContractRead({
-    address: safeVaultContract?.address,
+  const { data: totalYield = 0n, refetch: refetchTotalYield } = useContractRead({
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'getTotalYield',
   });
 
   const { data: ethPrice = 0n } = useContractRead({
-    address: safeVaultContract?.address,
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'getETHPrice',
   });
 
   const { data: minDeposit = parseEther('0.01') } = useContractRead({
-    address: safeVaultContract?.address,
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'minDeposit',
   });
 
   const { data: maxDeposit = parseEther('1000') } = useContractRead({
-    address: safeVaultContract?.address,
+    address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'maxDeposit',
   });
 
   // Write functions
-  const { write: depositWrite, data: depositTx } = useContractWrite({
-    address: safeVaultContract?.address,
-    abi: safeVaultContract?.abi,
-    functionName: 'deposit',
-  });
-
-  const { write: withdrawPrincipalWrite, data: withdrawPrincipalTx } = useContractWrite({
-    address: safeVaultContract?.address,
-    abi: safeVaultContract?.abi,
-    functionName: 'withdrawPrincipal',
-  });
-
-  const { write: withdrawYieldWrite, data: withdrawYieldTx } = useContractWrite({
-    address: safeVaultContract?.address,
-    abi: safeVaultContract?.abi,
-    functionName: 'withdrawYield',
-  });
+  const { writeContract, data: depositTx, isPending: isDepositWriting } = useWriteContract();
+  const { writeContract: writeWithdrawPrincipal, data: withdrawPrincipalTx, isPending: isWithdrawPrincipalWriting } = useWriteContract();
+  const { writeContract: writeWithdrawYield, data: withdrawYieldTx, isPending: isWithdrawYieldWriting } = useWriteContract();
 
   // Wait for transactions
-  const { isLoading: isDepositLoading } = useWaitForTransaction({
-    hash: depositTx?.hash,
+  const { isLoading: isDepositConfirming, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({
+    hash: depositTx,
   });
 
-  const { isLoading: isWithdrawPrincipalLoading } = useWaitForTransaction({
-    hash: withdrawPrincipalTx?.hash,
+  const { isLoading: isWithdrawPrincipalConfirming, isSuccess: isWithdrawPrincipalSuccess } = useWaitForTransactionReceipt({
+    hash: withdrawPrincipalTx,
   });
 
-  const { isLoading: isWithdrawYieldLoading } = useWaitForTransaction({
-    hash: withdrawYieldTx?.hash,
+  const { isLoading: isWithdrawYieldConfirming, isSuccess: isWithdrawYieldSuccess } = useWaitForTransactionReceipt({
+    hash: withdrawYieldTx,
   });
 
+  // Combined loading states
+  const isDepositLoading = isDepositPending || isDepositWriting || isDepositConfirming;
+  const isWithdrawPrincipalLoading = isWithdrawPrincipalPending || isWithdrawPrincipalWriting || isWithdrawPrincipalConfirming;
+  const isWithdrawYieldLoading = isWithdrawYieldPending || isWithdrawYieldWriting || isWithdrawYieldConfirming;
   const isLoading = isDepositLoading || isWithdrawPrincipalLoading || isWithdrawYieldLoading;
 
+  // Function to refetch all data
+  const refetchAllData = useCallback(async () => {
+    await Promise.all([
+      refetchPrincipalBalance(),
+      refetchYieldBalance(),
+      refetchTotalBalance(),
+      refetchTotalPrincipal(),
+      refetchTotalYield(),
+    ]);
+  }, [refetchPrincipalBalance, refetchYieldBalance, refetchTotalBalance, refetchTotalPrincipal, refetchTotalYield]);
+
   const deposit = async (amount: bigint) => {
-    depositWrite({
-      args: [amount],
-      value: amount,
-    });
+    try {
+      setIsDepositPending(true);
+      await writeContract({
+        address: safeVaultContract?.address as `0x${string}`,
+        abi: safeVaultContract?.abi,
+        functionName: 'deposit',
+        args: [amount],
+        value: amount,
+      });
+    } catch (error) {
+      setIsDepositPending(false);
+      throw error;
+    }
   };
 
   const withdrawPrincipal = async (amount: bigint) => {
-    withdrawPrincipalWrite({
-      args: [amount],
-    });
+    try {
+      setIsWithdrawPrincipalPending(true);
+      await writeWithdrawPrincipal({
+        address: safeVaultContract?.address as `0x${string}`,
+        abi: safeVaultContract?.abi,
+        functionName: 'withdrawPrincipal',
+        args: [amount],
+      });
+    } catch (error) {
+      setIsWithdrawPrincipalPending(false);
+      throw error;
+    }
   };
 
   const withdrawYield = async (amount: bigint) => {
-    withdrawYieldWrite({
-      args: [amount],
-    });
+    try {
+      setIsWithdrawYieldPending(true);
+      await writeWithdrawYield({
+        address: safeVaultContract?.address as `0x${string}`,
+        abi: safeVaultContract?.abi,
+        functionName: 'withdrawYield',
+        args: [amount],
+      });
+    } catch (error) {
+      setIsWithdrawYieldPending(false);
+      throw error;
+    }
   };
+
+  // Reset pending states and refetch data when transactions complete
+  useEffect(() => {
+    if (isDepositSuccess) {
+      setIsDepositPending(false);
+      refetchAllData();
+    }
+  }, [isDepositSuccess, refetchAllData]);
+
+  useEffect(() => {
+    if (isWithdrawPrincipalSuccess) {
+      setIsWithdrawPrincipalPending(false);
+      refetchAllData();
+    }
+  }, [isWithdrawPrincipalSuccess, refetchAllData]);
+
+  useEffect(() => {
+    if (isWithdrawYieldSuccess) {
+      setIsWithdrawYieldPending(false);
+      refetchAllData();
+    }
+  }, [isWithdrawYieldSuccess, refetchAllData]);
 
   return {
     principalBalance,
@@ -126,6 +188,22 @@ export const useSafeVault = () => {
     deposit,
     withdrawPrincipal,
     withdrawYield,
+    refetchAllData,
     isLoading,
+    isDepositLoading,
+    isWithdrawPrincipalLoading,
+    isWithdrawYieldLoading,
+    isDepositWriting,
+    isDepositConfirming,
+    isWithdrawPrincipalWriting,
+    isWithdrawPrincipalConfirming,
+    isWithdrawYieldWriting,
+    isWithdrawYieldConfirming,
+    isDepositSuccess,
+    isWithdrawPrincipalSuccess,
+    isWithdrawYieldSuccess,
+    depositTx,
+    withdrawPrincipalTx,
+    withdrawYieldTx,
   };
 };

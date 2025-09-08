@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/ILido.sol";
 import "./interfaces/IChainlinkOracle.sol";
 
@@ -17,7 +16,6 @@ import "./interfaces/IChainlinkOracle.sol";
  */
 contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     // ============ State Variables ============
     
@@ -65,7 +63,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         address _lido,
         address _stETH,
         address _ethPriceFeed
-    ) {
+    ) Ownable(msg.sender) {
         if (_lido == address(0) || _stETH == address(0) || _ethPriceFeed == address(0)) {
             revert InvalidAmount();
         }
@@ -92,9 +90,9 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         uint256 stETHSharesReceived = lido.submit{value: amount}(address(0));
         
         // Update user's principal balance and track their stETH shares
-        principalBalance[msg.sender] = principalBalance[msg.sender].add(amount);
-        userStETHShares[msg.sender] = userStETHShares[msg.sender].add(stETHSharesReceived);
-        totalPrincipal = totalPrincipal.add(amount);
+        principalBalance[msg.sender] = principalBalance[msg.sender] + amount;
+        userStETHShares[msg.sender] = userStETHShares[msg.sender] + stETHSharesReceived;
+        totalPrincipal = totalPrincipal + amount;
         
         emit Deposit(msg.sender, amount, stETHSharesReceived);
     }
@@ -110,15 +108,15 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         // Calculate the proportion of user's stETH shares to withdraw
         uint256 userShares = userStETHShares[msg.sender];
         uint256 totalUserPrincipal = principalBalance[msg.sender];
-        uint256 sharesToWithdraw = userShares.mul(amount).div(totalUserPrincipal);
+        uint256 sharesToWithdraw = (userShares * amount) / totalUserPrincipal;
         
         // Calculate how much ETH this represents
         uint256 ethToWithdraw = lido.getPooledEthByShares(sharesToWithdraw);
         
         // Update balances
-        principalBalance[msg.sender] = principalBalance[msg.sender].sub(amount);
-        userStETHShares[msg.sender] = userStETHShares[msg.sender].sub(sharesToWithdraw);
-        totalPrincipal = totalPrincipal.sub(amount);
+        principalBalance[msg.sender] = principalBalance[msg.sender] - amount;
+        userStETHShares[msg.sender] = userStETHShares[msg.sender] - sharesToWithdraw;
+        totalPrincipal = totalPrincipal - amount;
         
         // Request unstaking from Lido
         // Note: In production, you'd need to handle the unstaking queue
@@ -169,7 +167,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         
         // Subtract original principal to get yield
         if (currentSharesValue > principalBalance[user]) {
-            return currentSharesValue.sub(principalBalance[user]);
+            return currentSharesValue - principalBalance[user];
         }
         
         return 0;
@@ -182,7 +180,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     function getTotalYield() external view returns (uint256) {
         uint256 totalStETHValue = lido.getPooledEthByShares(lido.sharesOf(address(this)));
         if (totalStETHValue > totalPrincipal) {
-            return totalStETHValue.sub(totalPrincipal);
+            return totalStETHValue - totalPrincipal;
         }
         return 0;
     }
@@ -202,7 +200,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
      * @return Total balance in ETH equivalent
      */
     function getUserTotalBalance(address user) external view returns (uint256) {
-        return principalBalance[user].add(getUserYield(user));
+        return principalBalance[user] + getUserYield(user);
     }
     
     // ============ Admin Functions ============

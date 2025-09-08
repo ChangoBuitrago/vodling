@@ -3,12 +3,21 @@ import { useAccount } from 'wagmi';
 import { useSafeVault } from '../hooks/useSafeVault';
 import { parseEther, formatEther } from 'ethers';
 import { Plus, AlertCircle } from 'lucide-react';
+import TransactionLoader from './TransactionLoader';
 
 const DepositForm: React.FC = () => {
   const { isConnected } = useAccount();
-  const { deposit, minDeposit, maxDeposit, isLoading } = useSafeVault();
+  const { 
+    deposit, 
+    isDepositLoading,
+    isDepositWriting,
+    isDepositConfirming,
+    isDepositSuccess,
+    depositTx
+  } = useSafeVault();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleDeposit = async () => {
     if (!amount) {
@@ -33,11 +42,27 @@ const DepositForm: React.FC = () => {
 
       setError('');
       await deposit(amountWei);
-      setAmount('');
+      // Don't clear amount immediately - let user see the success state
     } catch (err: any) {
       setError(err.message || 'Deposit failed');
     }
   };
+
+  // Handle success state and auto-return to normal form
+  React.useEffect(() => {
+    if (isDepositSuccess) {
+      setAmount('');
+      setError('');
+      setShowSuccess(true);
+      
+      // Return to normal form after 3 seconds
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isDepositSuccess]);
 
   const handleMaxClick = () => {
     setAmount('1000'); // Max deposit
@@ -45,6 +70,47 @@ const DepositForm: React.FC = () => {
 
   if (!isConnected) {
     return null;
+  }
+
+  // Show transaction loader when processing
+  if (isDepositLoading) {
+    return (
+      <TransactionLoader
+        isWriting={isDepositWriting}
+        isConfirming={isDepositConfirming}
+        isSuccess={isDepositSuccess}
+        error={error}
+        transactionHash={depositTx}
+        type="deposit"
+      />
+    );
+  }
+
+  // Show success message briefly after successful transaction
+  if (isDepositSuccess && showSuccess) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Deposit Successful!</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Your ETH has been successfully deposited to the SafeVault.
+          </p>
+          {depositTx && (
+            <p className="text-xs text-gray-500 font-mono break-all">
+              Transaction: {depositTx}
+            </p>
+          )}
+          <p className="text-xs text-gray-500 mt-2">
+            Your balance will be updated shortly...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -100,10 +166,10 @@ const DepositForm: React.FC = () => {
 
         <button
           onClick={handleDeposit}
-          disabled={isLoading || !amount}
+          disabled={isDepositLoading || !amount}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
         >
-          {isLoading ? 'Processing...' : 'Deposit ETH'}
+          {isDepositLoading ? 'Processing...' : 'Deposit ETH'}
         </button>
       </div>
     </div>

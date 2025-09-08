@@ -17,12 +17,13 @@ contract DeployScript is Script {
     address constant ETH_PRICE_FEED_GOERLI = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
     
     // Sepolia addresses (for testing)
-    address constant LIDO_SEPOLIA = 0x6fC926C2e8C4b3F7c8e8b8C8C8C8C8C8C8C8C8C8; // Update with actual address
-    address constant STETH_SEPOLIA = 0x6fC926C2e8C4b3F7c8e8b8C8C8C8C8C8C8C8C8C8; // Update with actual address
+    address constant LIDO_SEPOLIA = 0x0000000000000000000000000000000000000000; // Update with actual address
+    address constant STETH_SEPOLIA = 0x0000000000000000000000000000000000000000; // Update with actual address
     address constant ETH_PRICE_FEED_SEPOLIA = 0x694AA1769357215DE4FAC081bf1f309aDC325306;
 
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        // Use test private key for local development
+        uint256 deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         address deployer = vm.addr(deployerPrivateKey);
         
         console.log("Deploying SafeVault with account:", deployer);
@@ -53,6 +54,13 @@ contract DeployScript is Script {
             stETH = STETH_SEPOLIA;
             ethPriceFeed = ETH_PRICE_FEED_SEPOLIA;
             console.log("Deploying to SEPOLIA");
+        } else if (block.chainid == 31337) {
+            // Local development (Anvil)
+            // Use mock addresses for local testing
+            lido = address(0x1234567890123456789012345678901234567890);
+            stETH = address(0x1234567890123456789012345678901234567890);
+            ethPriceFeed = address(0x1234567890123456789012345678901234567890);
+            console.log("Deploying to LOCAL DEVELOPMENT");
         } else {
             revert("Unsupported network");
         }

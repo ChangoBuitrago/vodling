@@ -26,7 +26,11 @@ const StatsCard: React.FC = () => {
     );
   }
 
-  const totalValueUSD = parseFloat(formatEther(totalPrincipal + totalYield)) * (ethPrice / 1e8);
+  const totalPrincipalETH = parseFloat(formatEther(totalPrincipal as bigint));
+  const totalYieldETH = parseFloat(formatEther(totalYield as bigint));
+  const totalETH = totalPrincipalETH + totalYieldETH;
+  const ethPriceUSD = Number(ethPrice as bigint) / 1e8;
+  const totalValueUSD = totalETH * ethPriceUSD;
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -42,7 +46,7 @@ const StatsCard: React.FC = () => {
             <span className="text-sm text-gray-600">Total Principal</span>
           </div>
           <span className="font-medium">
-            {parseFloat(formatEther(totalPrincipal)).toFixed(2)} ETH
+            {parseFloat(formatEther(totalPrincipal as bigint)).toFixed(2)} ETH
           </span>
         </div>
 
@@ -52,7 +56,7 @@ const StatsCard: React.FC = () => {
             <span className="text-sm text-gray-600">Total Yield</span>
           </div>
           <span className="font-medium">
-            {parseFloat(formatEther(totalYield)).toFixed(2)} ETH
+            {parseFloat(formatEther(totalYield as bigint)).toFixed(2)} ETH
           </span>
         </div>
 
@@ -70,7 +74,7 @@ const StatsCard: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">ETH Price</span>
             <span className="font-medium">
-              ${(ethPrice / 1e8).toFixed(2)}
+              ${ethPriceUSD.toFixed(2)}
             </span>
           </div>
         </div>

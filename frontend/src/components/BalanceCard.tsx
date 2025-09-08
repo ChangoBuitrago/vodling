@@ -44,7 +44,7 @@ const BalanceCard: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-blue-600">Principal</p>
               <p className="text-2xl font-bold text-blue-900">
-                {parseFloat(formatEther(principalBalance)).toFixed(4)} ETH
+                {parseFloat(formatEther(principalBalance as bigint)).toFixed(4)} ETH
               </p>
             </div>
           </div>
@@ -57,7 +57,7 @@ const BalanceCard: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-green-600">Yield</p>
               <p className="text-2xl font-bold text-green-900">
-                {parseFloat(formatEther(yieldBalance)).toFixed(4)} ETH
+                {parseFloat(formatEther(yieldBalance as bigint)).toFixed(4)} ETH
               </p>
             </div>
           </div>
@@ -70,7 +70,7 @@ const BalanceCard: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Total</p>
               <p className="text-2xl font-bold text-gray-900">
-                {parseFloat(formatEther(totalBalance)).toFixed(4)} ETH
+                {parseFloat(formatEther(totalBalance as bigint)).toFixed(4)} ETH
               </p>
             </div>
           </div>
