@@ -16,5 +16,24 @@
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^4.9.0"
+  },
+  "main": "test_withdraw_yield.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChangoBuitrago/vodling.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChangoBuitrago/vodling/issues"
+  },
+  "homepage": "https://github.com/ChangoBuitrago/vodling#readme",
+  "dependencies": {
+    "ethers": "^6.15.0"
   }
 }

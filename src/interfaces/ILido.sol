@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 interface ILido {
     function submit(address _referral) external payable returns (uint256);
+    function withdraw(uint256 _sharesAmount) external;
     function getTotalShares() external view returns (uint256);
     function getTotalPooledEther() external view returns (uint256);
     function sharesOf(address _account) external view returns (uint256);

@@ -1,13 +1,19 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1', // Local development - fixed underflow issue
+  LOCAL: '0x610178dA211FEF7D417bC0e6FeD39F05609AD788', // Local development - updated deployment
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0xc6e7DF5E7b4f2A278906862b61205850344D4e7d', // Local development - fixed underflow issue
+  LOCAL: '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6', // Local development - updated deployment
+};
+
+export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
+  MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
+  SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
+  LOCAL: '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318', // Local development - updated deployment
 };
 
 export const SAFE_VAULT_ABI = [
@@ -285,6 +291,13 @@ export const SAFE_VAULT_ABI = [
   {
     "inputs": [{"internalType": "address", "name": "", "type": "address"}],
     "name": "userStETHShares",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "name": "userPrincipalETH",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"

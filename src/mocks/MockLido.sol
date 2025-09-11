@@ -2,12 +2,13 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../interfaces/ILido.sol";
 
 /**
  * @title MockLido
  * @dev Mock implementation of Lido for local testing
  */
-contract MockLido is ERC20 {
+contract MockLido is ERC20, ILido {
     uint256 public constant SHARES_PER_TOKEN = 1e18;
     uint256 public constant YIELD_RATE_PER_DAY = 1e16; // 1% per day (10000 basis points) - higher for testing
     
@@ -22,7 +23,7 @@ contract MockLido is ERC20 {
     /**
      * @dev Submit ETH and get stETH tokens (1:1 ratio for simplicity)
      */
-    function submit(address _referral) external payable returns (uint256) {
+    function submit(address /* _referral */) external payable returns (uint256) {
         _updateYield();
         uint256 shares = msg.value;
         _mint(msg.sender, shares);
@@ -115,7 +116,44 @@ contract MockLido is ERC20 {
      * @dev Fast forward time for testing (only in mock)
      */
     function fastForwardTime(uint256 _seconds) external {
-        lastUpdateTime += _seconds;
+        // Update the lastUpdateTime to simulate time passing
+        // This will make the yield calculation think more time has passed
+        // Use unchecked to avoid underflow issues in testing
+        unchecked {
+            if (_seconds > block.timestamp) {
+                lastUpdateTime = 0;
+            } else {
+                lastUpdateTime = block.timestamp - _seconds;
+            }
+        }
+        
+        // Also apply the yield to totalPooledEth to make it persistent
+        if (totalPooledEth > 0) {
+            uint256 yieldMultiplier = 1e18 + (YIELD_RATE_PER_DAY * _seconds) / 1 days;
+            totalPooledEth = (totalPooledEth * yieldMultiplier) / 1e18;
+        }
+    }
+    
+    /**
+     * @dev Convert stETH back to ETH (for testing purposes)
+     * In real Lido, this would require going through the unstaking queue
+     */
+    function withdraw(uint256 _sharesAmount) external {
+        require(balanceOf(msg.sender) >= _sharesAmount, "Insufficient stETH balance");
+        
+        // Calculate ETH amount based on current exchange rate
+        uint256 ethAmount = this.getPooledEthByShares(_sharesAmount);
+        require(address(this).balance >= ethAmount, "Insufficient ETH in contract");
+        
+        // Burn the stETH tokens
+        _burn(msg.sender, _sharesAmount);
+        
+        // Update total pooled ETH
+        totalPooledEth -= ethAmount;
+        
+        // Transfer ETH to user
+        (bool success, ) = payable(msg.sender).call{value: ethAmount}("");
+        require(success, "ETH transfer failed");
     }
     
     /**

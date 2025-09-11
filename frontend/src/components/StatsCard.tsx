@@ -56,7 +56,7 @@ const StatsCard: React.FC = () => {
             <span className="text-sm text-gray-600">Total Yield</span>
           </div>
           <span className="font-medium">
-            {parseFloat(formatEther(totalYield as bigint)).toFixed(2)} ETH
+            {parseFloat(formatEther(totalYield as bigint)).toFixed(6)} ETH
           </span>
         </div>
 

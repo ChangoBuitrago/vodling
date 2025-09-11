@@ -50,6 +50,20 @@ contract MockLido is ILido {
     function getPooledEthByShares(uint256 _sharesAmount) external view override returns (uint256) {
         return _sharesAmount; // 1:1 for simplicity
     }
+    
+    function withdraw(uint256 _sharesAmount) external override {
+        require(userShares[msg.sender] >= _sharesAmount, "Insufficient stETH balance");
+        require(address(this).balance >= _sharesAmount, "Insufficient ETH in contract");
+        
+        // Update user shares
+        userShares[msg.sender] -= _sharesAmount;
+        totalShares -= _sharesAmount;
+        totalPooledEther -= _sharesAmount;
+        
+        // Transfer ETH to user
+        (bool success, ) = payable(msg.sender).call{value: _sharesAmount}("");
+        require(success, "ETH transfer failed");
+    }
 }
 
 contract MockStETH {

@@ -1,3 +1,324 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Import Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+/* CSS Variables for Vodling Design System */
+:root {
+  --primary-gradient: linear-gradient(135deg, #4F46E5, #7C3AED);
+  --hodl-color: #9CA3AF;
+  --vodl-color: #10B981;
+  --crash-color: #EF4444;
+  --background-dark: #050509;
+  --card-bg: rgba(24, 24, 29, 0.5);
+  --border-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Base styles */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-dark);
+  color: #E5E7EB;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animated background */
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.15), transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.12), transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08), transparent 50%);
+  background-size: 150% 150%;
+  animation: gradient-move 30s ease infinite;
+}
+
+@keyframes gradient-move {
+  0% { background-position: 0% 50%; }
+  25% { background-position: 50% 0%; }
+  50% { background-position: 100% 50%; }
+  75% { background-position: 50% 100%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glass effect components */
+.glass-effect {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+}
+
+/* Button styles */
+.btn-primary {
+  background: var(--primary-gradient);
+  transition: all 0.3s ease;
+  color: white;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  color: #E5E7EB;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Card styles */
+.strategy-card {
+  border-radius: 20px;
+  transition: all 0.4s ease;
+}
+
+.strategy-card:hover {
+  transform: translateY(-10px);
+  background: rgba(30, 30, 35, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+}
+
+/* Animation classes */
+.pulse { 
+  animation: pulse 2.5s infinite; 
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.95; }
+}
+
+.fade-in { 
+  animation: fadeIn 1.2s ease-out forwards; 
+  opacity: 0; 
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Strategy icon styles */
+.strategy-icon {
+  width: 64px; 
+  height: 64px; 
+  border-radius: 18px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  margin-bottom: 24px; 
+  flex-shrink: 0;
+}
+
+/* Text gradient utilities */
+.text-gradient-green {
+  background-image: linear-gradient(to right, #1CF2A6, #10B981);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-purple {
+  background-image: linear-gradient(to right, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-indigo {
+  background-image: linear-gradient(to right, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Icon background utilities */
+.icon-bg-green {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.icon-bg-purple {
+  background-color: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.icon-bg-indigo {
+  background-color: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.icon-text-green {
+  color: var(--vodl-color);
+}
+
+.icon-text-purple {
+  color: #a855f7;
+}
+
+.icon-text-indigo {
+  color: #6366f1;
+}
+
+/* Stat value styling */
+.stat-value { 
+  font-feature-settings: 'tnum'; 
+}
+
+/* Form input styling */
+.form-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #E5E7EB;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-input::placeholder {
+  color: #9CA3AF;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Enhanced withdraw panel styles */
+.withdraw-type-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.withdraw-type-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.withdraw-type-card.selected {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.balance-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.balance-card:hover::before {
+  left: 100%;
+}
+
+.quick-amount-btn {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-amount-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.quick-amount-btn:hover::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* Enhanced input focus states */
+.form-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Loading state animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

@@ -37,6 +37,9 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     /// @dev Mapping of user address to their stETH shares at deposit time
     mapping(address => uint256) public userStETHShares;
     
+    /// @dev Mapping of user address to their original principal in ETH (for yield calculation)
+    mapping(address => uint256) public userPrincipalETH;
+    
     /// @dev Minimum deposit amount (in wei)
     uint256 public minDeposit = 0.01 ether;
     
@@ -92,6 +95,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         // Update user's principal balance and track their stETH shares
         principalBalance[msg.sender] = principalBalance[msg.sender] + amount;
         userStETHShares[msg.sender] = userStETHShares[msg.sender] + stETHSharesReceived;
+        userPrincipalETH[msg.sender] = userPrincipalETH[msg.sender] + amount;
         totalPrincipal = totalPrincipal + amount;
         
         emit Deposit(msg.sender, amount, stETHSharesReceived);
@@ -116,12 +120,15 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         // Update balances
         principalBalance[msg.sender] = principalBalance[msg.sender] - amount;
         userStETHShares[msg.sender] = userStETHShares[msg.sender] - sharesToWithdraw;
+        userPrincipalETH[msg.sender] = userPrincipalETH[msg.sender] - amount;
         totalPrincipal = totalPrincipal - amount;
         
-        // Request unstaking from Lido
-        // Note: In production, you'd need to handle the unstaking queue
-        // For now, we'll transfer stETH directly
-        stETH.safeTransfer(msg.sender, sharesToWithdraw);
+        // Withdraw ETH from Lido (this will burn stETH and send ETH)
+        lido.withdraw(sharesToWithdraw);
+        
+        // Send ETH to user
+        (bool success, ) = payable(msg.sender).call{value: ethToWithdraw}("");
+        if (!success) revert TransferFailed();
         
         emit WithdrawPrincipal(msg.sender, amount, sharesToWithdraw);
     }
@@ -134,11 +141,30 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         uint256 availableYield = getUserYield(msg.sender);
         if (amount > availableYield) revert InsufficientBalance();
         
-        // Calculate stETH shares needed for this yield amount
-        uint256 sharesToWithdraw = lido.getSharesByPooledEth(amount);
+        // Get current value of user's stETH shares
+        uint256 currentSharesValue = lido.getPooledEthByShares(userStETHShares[msg.sender]);
         
-        // Transfer stETH to user
-        stETH.safeTransfer(msg.sender, sharesToWithdraw);
+        // Calculate the proportion of shares that represent the yield
+        // If currentSharesValue = principal + yield, then:
+        // yieldShares = (userStETHShares * amount) / currentSharesValue
+        uint256 yieldShares = (userStETHShares[msg.sender] * amount) / currentSharesValue;
+        
+        // Calculate the proportion of principal ETH to reduce
+        // This ensures that the principal ETH is reduced proportionally
+        uint256 principalETHToReduce = (userPrincipalETH[msg.sender] * amount) / currentSharesValue;
+        
+        // Update user's stETH shares (reduce by yield shares)
+        userStETHShares[msg.sender] = userStETHShares[msg.sender] - yieldShares;
+        
+        // Update user's principal ETH (reduce proportionally)
+        userPrincipalETH[msg.sender] = userPrincipalETH[msg.sender] - principalETHToReduce;
+        
+        // Withdraw ETH from Lido (this will burn stETH and send ETH)
+        lido.withdraw(yieldShares);
+        
+        // Send ETH to user
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        if (!success) revert TransferFailed();
         
         emit WithdrawYield(msg.sender, amount);
     }
@@ -160,14 +186,17 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
      * @return Yield amount in ETH equivalent
      */
     function getUserYield(address user) public view returns (uint256) {
-        if (principalBalance[user] == 0) return 0;
+        if (userStETHShares[user] == 0) return 0;
         
         // Get current value of user's stETH shares
         uint256 currentSharesValue = lido.getPooledEthByShares(userStETHShares[user]);
         
-        // Subtract original principal to get yield
-        if (currentSharesValue > principalBalance[user]) {
-            return currentSharesValue - principalBalance[user];
+        // Get user's original principal in ETH
+        uint256 userPrincipal = userPrincipalETH[user];
+        
+        // Subtract principal from current value to get yield
+        if (currentSharesValue > userPrincipal) {
+            return currentSharesValue - userPrincipal;
         }
         
         return 0;
@@ -241,4 +270,9 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     function emergencyRecover(address token, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(owner(), amount);
     }
+    
+    /**
+     * @dev Allow contract to receive ETH (needed for Lido withdrawals)
+     */
+    receive() external payable {}
 }

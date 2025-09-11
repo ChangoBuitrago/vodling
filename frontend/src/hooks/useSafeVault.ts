@@ -20,6 +20,8 @@ export const useSafeVault = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
+      refetchInterval: 5000, // Refetch every 5 seconds
+      staleTime: 0, // Always consider data stale
     },
   });
 
@@ -30,6 +32,8 @@ export const useSafeVault = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
+      refetchInterval: 5000, // Refetch every 5 seconds
+      staleTime: 0, // Always consider data stale
     },
   });
 
@@ -40,6 +44,8 @@ export const useSafeVault = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
+      refetchInterval: 5000, // Refetch every 5 seconds
+      staleTime: 0, // Always consider data stale
     },
   });
 
@@ -47,12 +53,20 @@ export const useSafeVault = () => {
     address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'totalPrincipal',
+    query: {
+      refetchInterval: 5000, // Refetch every 5 seconds
+      staleTime: 0, // Always consider data stale
+    },
   });
 
   const { data: totalYield = 0n, refetch: refetchTotalYield } = useContractRead({
     address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
     functionName: 'getTotalYield',
+    query: {
+      refetchInterval: 5000, // Refetch every 5 seconds
+      staleTime: 0, // Always consider data stale
+    },
   });
 
   const { data: ethPrice = 0n } = useContractRead({
@@ -99,14 +113,44 @@ export const useSafeVault = () => {
 
   // Function to refetch all data
   const refetchAllData = useCallback(async () => {
-    await Promise.all([
-      refetchPrincipalBalance(),
-      refetchYieldBalance(),
-      refetchTotalBalance(),
-      refetchTotalPrincipal(),
-      refetchTotalYield(),
-    ]);
-  }, [refetchPrincipalBalance, refetchYieldBalance, refetchTotalBalance, refetchTotalPrincipal, refetchTotalYield]);
+    console.log('Refetching all data...');
+    console.log('Contract address:', safeVaultContract?.address);
+    console.log('User address:', address);
+    console.log('Current principal balance:', principalBalance);
+    console.log('Current yield balance:', yieldBalance);
+    
+    // Add a small delay to ensure the transaction is fully processed
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    try {
+      const results = await Promise.all([
+        refetchPrincipalBalance(),
+        refetchYieldBalance(),
+        refetchTotalBalance(),
+        refetchTotalPrincipal(),
+        refetchTotalYield(),
+      ]);
+      
+      console.log('Refetch results:', results);
+      console.log('New principal balance:', results[0]?.data);
+      console.log('New yield balance:', results[1]?.data);
+      console.log('New total balance:', results[2]?.data);
+    } catch (error) {
+      console.error('Error during refetch:', error);
+    }
+  }, [refetchPrincipalBalance, refetchYieldBalance, refetchTotalBalance, refetchTotalPrincipal, refetchTotalYield, safeVaultContract?.address, address, principalBalance, yieldBalance]);
+
+  // Auto-refetch data every 10 seconds to keep yield updated
+  useEffect(() => {
+    if (!address || !safeVaultContract?.address) return;
+
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing balances...');
+      refetchAllData();
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [address, safeVaultContract?.address, refetchAllData]);
 
   const deposit = async (amount: bigint) => {
     try {
@@ -163,14 +207,18 @@ export const useSafeVault = () => {
   }, [isDepositSuccess, refetchAllData]);
 
   useEffect(() => {
+    console.log('Withdraw principal success state:', isWithdrawPrincipalSuccess);
     if (isWithdrawPrincipalSuccess) {
+      console.log('Withdraw principal success detected, refetching data...');
       setIsWithdrawPrincipalPending(false);
       refetchAllData();
     }
   }, [isWithdrawPrincipalSuccess, refetchAllData]);
 
   useEffect(() => {
+    console.log('Withdraw yield success state:', isWithdrawYieldSuccess);
     if (isWithdrawYieldSuccess) {
+      console.log('Withdraw yield success detected, refetching data...');
       setIsWithdrawYieldPending(false);
       refetchAllData();
     }
