@@ -20,7 +20,7 @@ export const useSafeVault = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
-      refetchInterval: 5000, // Refetch every 5 seconds
+      refetchInterval: false, // Disable automatic refetch
       staleTime: 0, // Always consider data stale
     },
   });
@@ -32,7 +32,7 @@ export const useSafeVault = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
-      refetchInterval: 5000, // Refetch every 5 seconds
+      refetchInterval: false, // Disable automatic refetch
       staleTime: 0, // Always consider data stale
     },
   });
@@ -44,7 +44,7 @@ export const useSafeVault = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
-      refetchInterval: 5000, // Refetch every 5 seconds
+      refetchInterval: false, // Disable automatic refetch
       staleTime: 0, // Always consider data stale
     },
   });
@@ -54,7 +54,7 @@ export const useSafeVault = () => {
     abi: safeVaultContract?.abi,
     functionName: 'totalPrincipal',
     query: {
-      refetchInterval: 5000, // Refetch every 5 seconds
+      refetchInterval: false, // Disable automatic refetch
       staleTime: 0, // Always consider data stale
     },
   });
@@ -64,7 +64,7 @@ export const useSafeVault = () => {
     abi: safeVaultContract?.abi,
     functionName: 'getTotalYield',
     query: {
-      refetchInterval: 5000, // Refetch every 5 seconds
+      refetchInterval: false, // Disable automatic refetch
       staleTime: 0, // Always consider data stale
     },
   });
@@ -93,7 +93,7 @@ export const useSafeVault = () => {
   const { writeContract: writeWithdrawYield, data: withdrawYieldTx, isPending: isWithdrawYieldWriting } = useWriteContract();
 
   // Wait for transactions
-  const { isLoading: isDepositConfirming, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({
+  const { isLoading: isDepositConfirming, isSuccess: isDepositSuccess, data: depositReceipt } = useWaitForTransactionReceipt({
     hash: depositTx,
   });
 
@@ -140,17 +140,7 @@ export const useSafeVault = () => {
     }
   }, [refetchPrincipalBalance, refetchYieldBalance, refetchTotalBalance, refetchTotalPrincipal, refetchTotalYield, safeVaultContract?.address, address, principalBalance, yieldBalance]);
 
-  // Auto-refetch data every 10 seconds to keep yield updated
-  useEffect(() => {
-    if (!address || !safeVaultContract?.address) return;
-
-    const interval = setInterval(() => {
-      console.log('Auto-refreshing balances...');
-      refetchAllData();
-    }, 10000); // 10 seconds
-
-    return () => clearInterval(interval);
-  }, [address, safeVaultContract?.address, refetchAllData]);
+  // Manual refetch only - no automatic intervals
 
   const deposit = async (amount: bigint) => {
     try {
@@ -200,11 +190,14 @@ export const useSafeVault = () => {
 
   // Reset pending states and refetch data when transactions complete
   useEffect(() => {
+    console.log('Deposit success state:', isDepositSuccess);
+    console.log('Deposit receipt:', depositReceipt);
     if (isDepositSuccess) {
+      console.log('Deposit success detected, refetching data...');
       setIsDepositPending(false);
       refetchAllData();
     }
-  }, [isDepositSuccess, refetchAllData]);
+  }, [isDepositSuccess, depositReceipt, refetchAllData]);
 
   useEffect(() => {
     console.log('Withdraw principal success state:', isWithdrawPrincipalSuccess);

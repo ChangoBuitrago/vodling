@@ -39,8 +39,7 @@ const BalanceCard: React.FC = () => {
     principalBalance, 
     yieldBalance, 
     totalBalance, 
-    isLoading,
-    refetchAllData
+    isLoading
   } = useSafeVault();
   
   const fadeInRef = useFadeIn(0.2);
@@ -83,20 +82,10 @@ const BalanceCard: React.FC = () => {
 
   return (
     <div ref={fadeInRef} className="glass-effect p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-white flex items-center">
-          <i className="fas fa-chart-line text-gradient-vodl mr-3"></i>
-          Your Vodling Portfolio
-        </h3>
-        <button
-          onClick={refetchAllData}
-          className="px-3 py-1 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-gray-300 flex items-center"
-          title="Refresh balances"
-        >
-          <i className="fas fa-sync-alt mr-2"></i>
-          Refresh
-        </button>
-      </div>
+      <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+        <i className="fas fa-chart-line text-gradient-vodl mr-3"></i>
+        Your Vodling Portfolio
+      </h3>
       
       <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Principal Balance */}

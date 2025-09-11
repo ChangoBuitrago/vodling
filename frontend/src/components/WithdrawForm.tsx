@@ -95,6 +95,13 @@ const WithdrawForm: React.FC = () => {
     }
   };
 
+  const handleMaxClick = () => {
+    if (selectedType === 'principal') {
+      setPrincipalAmount(formatEther(principalBalance as bigint));
+    } else if (selectedType === 'yield') {
+      setYieldAmount(formatEther(yieldBalance as bigint));
+    }
+  };
 
   // Handle success states and auto-return to normal form
   React.useEffect(() => {
@@ -328,22 +335,11 @@ const WithdrawForm: React.FC = () => {
                 }
                 className="form-input w-full px-4 py-3 pr-20 text-lg"
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-2">
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    const maxAmount = selectedType === 'principal' 
-                      ? formatEther(principalBalance as bigint)
-                      : formatEther(yieldBalance as bigint);
-                    
-                    if (selectedType === 'principal') {
-                      setPrincipalAmount(maxAmount);
-                    } else {
-                      setYieldAmount(maxAmount);
-                    }
-                    setError('');
-                  }}
-                  className="px-3 py-1 text-xs bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-gray-300"
+                  onClick={handleMaxClick}
+                  className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded transition-colors text-gray-300"
                 >
                   Max
                 </button>

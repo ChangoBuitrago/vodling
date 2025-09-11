@@ -54,6 +54,12 @@ const DepositForm: React.FC = () => {
     }
   };
 
+  const handleMaxClick = () => {
+    if (walletBalance) {
+      setAmount(formatEther(walletBalance.value));
+    }
+  };
+
   // Handle success state and auto-return to normal form
   React.useEffect(() => {
     if (isDepositSuccess) {
@@ -70,12 +76,6 @@ const DepositForm: React.FC = () => {
     }
   }, [isDepositSuccess]);
 
-  const handleMaxClick = () => {
-    if (walletBalance) {
-      const balance = parseFloat(formatEther(walletBalance.value));
-      setAmount(balance.toFixed(4));
-    }
-  };
 
   if (!isConnected) {
     return null;
@@ -145,11 +145,11 @@ const DepositForm: React.FC = () => {
               max="1000"
               className="form-input w-full px-4 py-3 pr-20 text-lg"
             />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-2">
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
               <button
                 type="button"
                 onClick={handleMaxClick}
-                className="px-3 py-1 text-xs bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-gray-300"
+                className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded transition-colors text-gray-300"
               >
                 Max
               </button>
