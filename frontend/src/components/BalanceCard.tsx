@@ -2,36 +2,7 @@ import React from 'react';
 import { useAccount } from 'wagmi';
 import { useSafeVault } from '../hooks/useSafeVault';
 import { formatEther } from 'ethers';
-import { useFadeIn, useStaggerChildren, useHoverAnimation } from '../hooks/useAnimations';
-
-interface BalanceItemProps {
-  icon: string;
-  iconBg: string;
-  iconText: string;
-  label: string;
-  value: string;
-  valueClass: string;
-}
-
-const BalanceItem: React.FC<BalanceItemProps> = ({ icon, iconBg, iconText, label, value, valueClass }) => {
-  const hoverRef = useHoverAnimation();
-  
-  return (
-    <div ref={hoverRef} className="strategy-card glass-effect p-4">
-      <div className="flex items-center">
-        <div className={`strategy-icon ${iconBg}`}>
-          <i className={`${icon} ${iconText} text-xl`}></i>
-        </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-gray-400">{label}</p>
-          <p className={`text-2xl font-bold stat-value ${valueClass}`}>
-            {value}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { useFadeIn, useStaggerChildren } from '../hooks/useAnimations';
 
 const BalanceCard: React.FC = () => {
   const { isConnected } = useAccount();
@@ -70,9 +41,9 @@ const BalanceCard: React.FC = () => {
       <div className="glass-effect p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-white/10 rounded w-1/3 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="loading-skeleton rounded-xl p-4 h-24"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2].map((i) => (
+              <div key={i} className="loading-skeleton rounded-xl p-6 h-32"></div>
             ))}
           </div>
         </div>
@@ -87,36 +58,34 @@ const BalanceCard: React.FC = () => {
         Your Vodling Portfolio
       </h3>
       
-      <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Principal Balance */}
-        <BalanceItem
-          icon="fas fa-shield-alt"
-          iconBg="icon-bg-indigo"
-          iconText="icon-text-indigo"
-          label="Principal"
-          value={`${parseFloat(formatEther(principalBalance as bigint)).toFixed(4)} ETH`}
-          valueClass="text-white"
-        />
-
-        {/* Yield Balance */}
-        <BalanceItem
-          icon="fas fa-chart-line"
-          iconBg="icon-bg-green"
-          iconText="icon-text-green"
-          label="Yield Earned"
-          value={`${parseFloat(formatEther(yieldBalance as bigint)).toFixed(6)} ETH`}
-          valueClass="text-gradient-green"
-        />
+        <div className="strategy-card glass-effect p-6">
+          <div className="strategy-icon icon-bg-blue mx-auto mb-4">
+            <i className="fas fa-coins icon-text-blue text-2xl"></i>
+          </div>
+          <p className="text-lg font-medium text-gray-400 mb-2">Principal Balance</p>
+          <p className="text-3xl font-bold text-gradient-blue">
+            {parseFloat(formatEther(principalBalance as bigint)).toFixed(6)} ETH
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Your Original Deposit
+          </p>
+        </div>
 
         {/* Total Balance */}
-        <BalanceItem
-          icon="fas fa-wallet"
-          iconBg="icon-bg-purple"
-          iconText="icon-text-purple"
-          label="Total Value"
-          value={`${parseFloat(formatEther(totalBalance as bigint)).toFixed(4)} ETH`}
-          valueClass="text-gradient-purple"
-        />
+        <div className="strategy-card glass-effect p-6">
+          <div className="strategy-icon icon-bg-vodl mx-auto mb-4">
+            <i className="fas fa-chart-line icon-text-vodl text-2xl"></i>
+          </div>
+          <p className="text-lg font-medium text-gray-400 mb-2">Total Balance</p>
+          <p className="text-3xl font-bold text-gradient-vodl">
+            {parseFloat(formatEther(totalBalance as bigint)).toFixed(6)} ETH
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Principal + Yield Combined
+          </p>
+        </div>
       </div>
     </div>
   );

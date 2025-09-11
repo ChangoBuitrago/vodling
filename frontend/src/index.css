@@ -161,6 +161,20 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.text-gradient-vodl {
+  background-image: linear-gradient(to right, #10B981, #1CF2A6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-blue {
+  background-image: linear-gradient(to right, #3B82F6, #60A5FA);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* Icon background utilities */
 .icon-bg-green {
   background-color: rgba(16, 185, 129, 0.1);
@@ -177,6 +191,16 @@ body {
   border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
+.icon-bg-vodl {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.icon-bg-blue {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
 .icon-text-green {
   color: var(--vodl-color);
 }
@@ -187,6 +211,14 @@ body {
 
 .icon-text-indigo {
   color: #6366f1;
+}
+
+.icon-text-vodl {
+  color: var(--vodl-color);
+}
+
+.icon-text-blue {
+  color: #3B82F6;
 }
 
 /* Stat value styling */
