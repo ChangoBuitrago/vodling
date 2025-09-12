@@ -7,27 +7,13 @@ const YieldTester: React.FC = () => {
   const { isConnected } = useAccount();
   const { mockLidoContract } = useContract();
   const { refetchAllData, yieldBalance } = useSafeVault();
-  const { writeContract, data: updateYieldTx, isPending: isUpdateYieldPending } = useWriteContract();
   const { writeContract: writeFastForward, data: fastForwardTx, isPending: isFastForwardPending } = useWriteContract();
   const [lastYieldUpdate, setLastYieldUpdate] = useState<Date | null>(null);
 
   // Wait for transactions
-  const { isSuccess: isUpdateYieldSuccess } = useWaitForTransactionReceipt({
-    hash: updateYieldTx,
-  });
-
   const { isSuccess: isFastForwardSuccess } = useWaitForTransactionReceipt({
     hash: fastForwardTx,
   });
-
-  // Refetch data when transactions complete
-  React.useEffect(() => {
-    if (isUpdateYieldSuccess) {
-      console.log('Yield update successful, refetching data...');
-      setLastYieldUpdate(new Date());
-      refetchAllData();
-    }
-  }, [isUpdateYieldSuccess, refetchAllData]);
 
   React.useEffect(() => {
     if (isFastForwardSuccess) {
@@ -37,23 +23,6 @@ const YieldTester: React.FC = () => {
     }
   }, [isFastForwardSuccess, refetchAllData]);
 
-  const handleUpdateYield = async () => {
-    if (!mockLidoContract?.address) {
-      console.error('MockLido contract not available');
-      return;
-    }
-    
-    try {
-      console.log('Updating yield...');
-      await writeContract({
-        address: mockLidoContract.address as `0x${string}`,
-        abi: mockLidoContract.abi,
-        functionName: 'updateYield',
-      });
-    } catch (error) {
-      console.error('Failed to update yield:', error);
-    }
-  };
 
   const handleFastForward = async () => {
     if (!mockLidoContract?.address) {
@@ -82,29 +51,14 @@ const YieldTester: React.FC = () => {
   return (
     <div className="space-y-6">
         <p className="text-sm text-gray-400">
-          For testing purposes, you can manually trigger yield updates or fast forward time to simulate yield generation.
+          For testing purposes, you can fast forward time to simulate yield generation.
         </p>
         
         <div className="space-y-3">
           <button
-            onClick={handleUpdateYield}
-            disabled={isUpdateYieldPending}
-            className="btn-primary w-full py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="flex items-center justify-center">
-              {isUpdateYieldPending ? (
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-              ) : (
-                <i className="fas fa-sync-alt mr-2"></i>
-              )}
-              {isUpdateYieldPending ? 'Updating...' : 'Update Yield'}
-            </span>
-          </button>
-          
-          <button
             onClick={handleFastForward}
             disabled={isFastForwardPending}
-            className="btn-secondary w-full py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary w-full py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="flex items-center justify-center">
               {isFastForwardPending ? (
@@ -140,12 +94,12 @@ const YieldTester: React.FC = () => {
           </h4>
           <div className="text-xs text-gray-300 space-y-2">
             <div className="flex items-start">
-              <i className="fas fa-sync-alt text-indigo-400 mr-2 mt-0.5 text-xs"></i>
-              <span><strong>Update Yield:</strong> Manually trigger yield calculation</span>
-            </div>
-            <div className="flex items-start">
               <i className="fas fa-clock text-indigo-400 mr-2 mt-0.5 text-xs"></i>
               <span><strong>+1 Day:</strong> Fast forward time by 1 day (simulates 1% yield)</span>
+            </div>
+            <div className="flex items-start">
+              <i className="fas fa-info-circle text-indigo-400 mr-2 mt-0.5 text-xs"></i>
+              <span><strong>Note:</strong> Yield accumulates automatically over time. This button is for testing only.</span>
             </div>
           </div>
         </div>

@@ -274,9 +274,9 @@ const WithdrawForm: React.FC = () => {
               <button
                 type="button"
                 onClick={handleMaxClick}
-                disabled={isEstimatingGas}
+                disabled={isEstimatingGas || !availableAmountWei || availableAmountWei === 0n}
                 className={`px-2 py-1 text-xs rounded transition-colors ${
-                  isEstimatingGas 
+                  isEstimatingGas || !availableAmountWei || availableAmountWei === 0n
                     ? 'bg-gray-500 cursor-not-allowed text-gray-400' 
                     : 'bg-white/10 hover:bg-white/20 text-gray-300'
                 }`}
@@ -316,7 +316,7 @@ const WithdrawForm: React.FC = () => {
         {/* Withdraw Button */}
         <button
           onClick={handleWithdraw}
-          disabled={isWithdrawTotalLoading || !amount}
+          disabled={isWithdrawTotalLoading || !amount || !availableAmountWei || availableAmountWei === 0n}
           className="btn-primary w-full py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isWithdrawTotalLoading ? (
