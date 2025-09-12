@@ -11,7 +11,9 @@ const DepositForm: React.FC = () => {
     address: address,
   });
   const { 
-    deposit, 
+    // Direct writeContract function for production-ready transactions
+    writeContract,
+    safeVaultContract,
     isDepositLoading,
     isDepositWriting,
     isDepositConfirming,
@@ -29,9 +31,16 @@ const DepositForm: React.FC = () => {
   const fadeInRef = useFadeIn(0.4);
   const glowRef = useGlowEffect('#10B981');
 
-  const handleDeposit = async () => {
+  const handleDeposit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form submission
+    
     if (!amount) {
       setError('Please enter an amount');
+      return;
+    }
+
+    if (!safeVaultContract?.address || !safeVaultContract?.abi) {
+      setError('Contract not available');
       return;
     }
 
@@ -42,8 +51,16 @@ const DepositForm: React.FC = () => {
       
       setError('');
       
-      console.log('🚀 Proceeding with deposit...');
-      await deposit(amountWei);
+      console.log('🚀 Proceeding with deposit using direct writeContract...');
+      
+      // Call writeContract directly - this ensures it only runs on user click
+      await writeContract({
+        address: safeVaultContract.address as `0x${string}`,
+        abi: safeVaultContract.abi,
+        functionName: 'deposit',
+        value: amountWei,
+      });
+      
       setAmount('');
     } catch (err: any) {
       console.error('Deposit error:', err);
@@ -199,12 +216,13 @@ const DepositForm: React.FC = () => {
           </div>
         )}
 
-        {/* Deposit Button */}
-        <button
-          onClick={handleDeposit}
-          disabled={isDepositLoading || !amount}
-          className="btn-primary w-full py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        {/* Deposit Form */}
+        <form onSubmit={handleDeposit}>
+          <button
+            type="submit"
+            disabled={isDepositLoading || !amount}
+            className="btn-primary w-full py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
           {isDepositLoading ? (
             <span className="flex items-center justify-center">
               <i className="fas fa-spinner fa-spin mr-3"></i>
@@ -215,8 +233,9 @@ const DepositForm: React.FC = () => {
               <i className="fas fa-arrow-down mr-3"></i>
               Deposit Principal
             </span>
-          )}
-        </button>
+            )}
+          </button>
+        </form>
 
         {/* Info Panel */}
         <div className="glass-effect p-4 border border-vodl-500/20">

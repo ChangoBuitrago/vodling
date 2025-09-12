@@ -78,7 +78,7 @@ export const useSafeVault = () => {
     setTransactionError(null);
   }, []);
 
-  // Write functions
+  // Write functions - these will be called directly from components
   const { writeContract, data: depositTx, isPending: isDepositWriting } = useWriteContract();
   const { writeContract: writeWithdrawTotal, data: withdrawTotalTx, isPending: isWithdrawTotalWriting } = useWriteContract();
   
@@ -676,6 +676,10 @@ export const useSafeVault = () => {
     minDeposit,
     maxDeposit,
     minWithdraw,
+    // Expose writeContract functions directly for components to use
+    writeContract,
+    writeWithdrawTotal,
+    // Legacy functions for backward compatibility (will be deprecated)
     deposit,
     withdrawTotal,
     estimateWithdrawalGas,
@@ -697,5 +701,8 @@ export const useSafeVault = () => {
     transactionError,
     clearTransactionError,
     isRefreshing, // Expose Web3Context's isRefreshing state
+    // Contract info for direct usage
+    safeVaultContract,
+    mockLidoContract,
   };
 };

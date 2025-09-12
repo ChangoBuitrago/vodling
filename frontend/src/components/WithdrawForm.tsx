@@ -8,7 +8,9 @@ import { useFadeIn, useGlowEffect } from '../hooks/useAnimations';
 const WithdrawForm: React.FC = () => {
   const { isConnected } = useAccount();
   const { 
-    withdrawTotal, 
+    // Direct writeContract function for production-ready transactions
+    writeWithdrawTotal,
+    safeVaultContract,
     actualWithdrawableBalance, 
     isWithdrawTotalLoading,
     isWithdrawTotalWriting,
@@ -28,9 +30,16 @@ const WithdrawForm: React.FC = () => {
   const fadeInRef = useFadeIn(0.4);
   const glowRef = useGlowEffect('#8B5CF6');
 
-  const handleWithdraw = async () => {
+  const handleWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form submission
+    
     if (!amount) {
       setError('Please enter an amount');
+      return;
+    }
+
+    if (!safeVaultContract?.address || !safeVaultContract?.abi) {
+      setError('Contract not available');
       return;
     }
 
@@ -41,8 +50,16 @@ const WithdrawForm: React.FC = () => {
       
       setError('');
       
-      console.log('🚀 Proceeding with withdrawal...');
-      await withdrawTotal(amountWei);
+      console.log('🚀 Proceeding with withdrawal using direct writeContract...');
+      
+      // Call writeWithdrawTotal directly - this ensures it only runs on user click
+      await writeWithdrawTotal({
+        address: safeVaultContract.address as `0x${string}`,
+        abi: safeVaultContract.abi,
+        functionName: 'withdrawTotal',
+        args: [amountWei],
+      });
+      
       setAmount('');
     } catch (err: any) {
       console.error('Withdraw total error:', err);
@@ -195,12 +212,13 @@ const WithdrawForm: React.FC = () => {
           </div>
         )}
 
-        {/* Withdraw Button */}
-        <button
-          onClick={handleWithdraw}
-          disabled={isWithdrawTotalLoading || !amount}
-          className="btn-primary w-full py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        {/* Withdraw Form */}
+        <form onSubmit={handleWithdraw}>
+          <button
+            type="submit"
+            disabled={isWithdrawTotalLoading || !amount}
+            className="btn-primary w-full py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
           {isWithdrawTotalLoading ? (
             <span className="flex items-center justify-center">
               <i className="fas fa-spinner fa-spin mr-3"></i>
@@ -211,8 +229,9 @@ const WithdrawForm: React.FC = () => {
               <i className="fas fa-arrow-up mr-3"></i>
               Withdraw Funds
             </span>
-          )}
-        </button>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );
