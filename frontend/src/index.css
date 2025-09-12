@@ -398,6 +398,13 @@ input[type="number"] {
   border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
+.deposit-unselected:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.4)) !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15) !important;
+}
+
 .withdraw-selected {
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.8), rgba(124, 58, 237, 0.9)) !important;
   border: 1px solid rgba(147, 51, 234, 0.3) !important;
@@ -406,4 +413,11 @@ input[type="number"] {
 .withdraw-unselected {
   background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)) !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.withdraw-unselected:hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(124, 58, 237, 0.4)) !important;
+  border: 1px solid rgba(147, 51, 234, 0.2) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(147, 51, 234, 0.15) !important;
 }
