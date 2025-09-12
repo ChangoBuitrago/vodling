@@ -342,7 +342,7 @@ const TransactionForm: React.FC = () => {
               <div className="balance-minimal">
                 <span className="text-xs text-gray-400">
                   {selectedAction === 'deposit' ? 'Available for deposit:' : 'Available for withdrawal:'} 
-                  <span className="text-green-400 font-medium">
+                  <span className={`font-medium ${selectedAction === 'deposit' ? 'text-green-400' : 'text-purple-400'}`}>
                     {selectedAction === 'deposit' 
                       ? walletBalance ? ` ${parseFloat(formatEther(walletBalance.value)).toFixed(4)} ETH` : ' 0.0000 ETH'
                       : actualWithdrawableBalance ? ` ${parseFloat(formatEther(actualWithdrawableBalance as bigint)).toFixed(4)} ETH` : ' 0.0000 ETH'
