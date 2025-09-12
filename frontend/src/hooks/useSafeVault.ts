@@ -187,11 +187,30 @@ export const useSafeVault = () => {
           console.log(`🔍 Error code:`, error?.code);
           console.log(`🔍 Error details:`, error?.details);
           
-          // Check if it's a gas-related error or insufficient funds error
+          // Check error details
           const errorMessage = error?.message?.toLowerCase() || '';
           const errorCode = error?.code?.toString() || '';
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const errorDetails = error?.details?.toLowerCase() || '';
+          
+          console.log(`🔍 Error analysis:`);
+          console.log(`  - Error code: ${errorCode}`);
+          console.log(`  - Error message: ${errorMessage}`);
+          console.log(`  - Attempts left: ${gasLimits.length - i - 1}`);
+          
+          // Check for user cancellation FIRST (MetaMask rejection with code 4001)
+          const isUserCancellation = error?.code === 4001 || 
+                                    errorMessage.includes('user rejected') || 
+                                    errorMessage.includes('user denied') ||
+                                    errorMessage.includes('cancelled') ||
+                                    errorMessage.includes('rejected') ||
+                                    errorMessage.includes('denied transaction signature');
+          
+          if (isUserCancellation) {
+            console.log(`🚫 User cancelled deposit transaction - resetting pending state immediately`);
+            setIsDepositPending(false); // Reset our pending state immediately
+            throw error; // Don't retry, user cancelled
+          }
           
           const isGasError = errorMessage.includes('gas') || 
                             errorMessage.includes('out of gas') ||
@@ -208,10 +227,8 @@ export const useSafeVault = () => {
                                           errorCode.includes('INSUFFICIENT_FUNDS') ||
                                           errorCode.includes('INSUFFICIENT_BALANCE');
           
-          console.log(`🔍 Error analysis:`);
           console.log(`  - Is gas error: ${isGasError}`);
           console.log(`  - Is insufficient funds error: ${isInsufficientFundsError}`);
-          console.log(`  - Attempts left: ${gasLimits.length - i - 1}`);
           
           // If it's an insufficient funds error, don't retry - the user needs more ETH
           if (isInsufficientFundsError) {
@@ -238,6 +255,33 @@ export const useSafeVault = () => {
       throw lastError;
       
     } catch (error) {
+      console.log('🚨 deposit caught error:', error);
+      
+      // Check for user cancellation first
+      const errorMessage = (error as any)?.message || '';
+      const errorCode = (error as any)?.code?.toString() || '';
+      
+      console.log('🔍 Error analysis in catch block:', {
+        errorMessage,
+        errorCode,
+        errorType: typeof error,
+        errorKeys: Object.keys(error || {}),
+      });
+      
+      const isUserCancellation = errorCode === '4001' ||
+                                errorMessage.includes('user rejected') || 
+                                errorMessage.includes('User denied') ||
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('rejected') ||
+                                errorMessage.includes('denied transaction signature');
+      
+      if (isUserCancellation) {
+        console.log('🚫 User cancelled deposit in catch block - resetting state');
+        setIsDepositPending(false);
+        setTransactionError(null);
+        throw error; // Re-throw so component can handle it
+      }
+      
       // Ensure pending state is always reset on any error
       if (!transactionSubmitted) {
         setIsDepositPending(false);
@@ -288,6 +332,8 @@ export const useSafeVault = () => {
     try {
       setIsWithdrawTotalPending(true);
       setTransactionError(null); // Clear any previous error
+      
+      console.log('🚀 Starting withdrawTotal transaction...');
       
       console.log('🔍 Withdraw Total Debug:');
       console.log(`  - Input amount: ${formatEther(amount)} ETH`);
@@ -352,11 +398,30 @@ export const useSafeVault = () => {
           console.log(`🔍 Error code:`, error?.code);
           console.log(`🔍 Error details:`, error?.details);
           
-          // Check if it's a gas-related error or insufficient funds error
+          // Check error details
           const errorMessage = error?.message?.toLowerCase() || '';
           const errorCode = error?.code?.toString() || '';
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const errorDetails = error?.details?.toLowerCase() || '';
+          
+          console.log(`🔍 Error analysis:`);
+          console.log(`  - Error code: ${errorCode}`);
+          console.log(`  - Error message: ${errorMessage}`);
+          console.log(`  - Attempts left: ${gasLimits.length - i - 1}`);
+          
+          // Check for user cancellation FIRST (MetaMask rejection with code 4001)
+          const isUserCancellation = error?.code === 4001 || 
+                                    errorMessage.includes('user rejected') || 
+                                    errorMessage.includes('user denied') ||
+                                    errorMessage.includes('cancelled') ||
+                                    errorMessage.includes('rejected') ||
+                                    errorMessage.includes('denied transaction signature');
+          
+          if (isUserCancellation) {
+            console.log(`🚫 User cancelled withdrawal transaction - resetting pending state immediately`);
+            setIsWithdrawTotalPending(false); // Reset our pending state immediately
+            throw error; // Don't retry, user cancelled
+          }
           
           const isGasError = errorMessage.includes('gas') || 
                             errorMessage.includes('out of gas') ||
@@ -373,10 +438,8 @@ export const useSafeVault = () => {
                                           errorCode.includes('INSUFFICIENT_FUNDS') ||
                                           errorCode.includes('INSUFFICIENT_BALANCE');
           
-          console.log(`🔍 Error analysis:`);
           console.log(`  - Is gas error: ${isGasError}`);
           console.log(`  - Is insufficient funds error: ${isInsufficientFundsError}`);
-          console.log(`  - Attempts left: ${gasLimits.length - i - 1}`);
           
           // If it's an insufficient funds error, don't retry - the user needs more ETH
           if (isInsufficientFundsError) {
@@ -403,6 +466,33 @@ export const useSafeVault = () => {
       throw lastError;
       
     } catch (error) {
+      console.log('🚨 withdrawTotal caught error:', error);
+      
+      // Check for user cancellation first
+      const errorMessage = (error as any)?.message || '';
+      const errorCode = (error as any)?.code?.toString() || '';
+      
+      console.log('🔍 Error analysis in catch block:', {
+        errorMessage,
+        errorCode,
+        errorType: typeof error,
+        errorKeys: Object.keys(error || {}),
+      });
+      
+      const isUserCancellation = errorCode === '4001' ||
+                                errorMessage.includes('user rejected') || 
+                                errorMessage.includes('User denied') ||
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('rejected') ||
+                                errorMessage.includes('denied transaction signature');
+      
+      if (isUserCancellation) {
+        console.log('🚫 User cancelled withdrawal in catch block - resetting state');
+        setIsWithdrawTotalPending(false);
+        setTransactionError(null);
+        throw error; // Re-throw so component can handle it
+      }
+      
       // Ensure pending state is always reset on any error
       if (!transactionSubmitted) {
         setIsWithdrawTotalPending(false);
@@ -439,16 +529,29 @@ export const useSafeVault = () => {
       console.log('❌ Deposit confirmation error:', depositError);
       console.log('🔍 Error type:', depositError?.name);
       console.log('🔍 Error message:', depositError?.message);
+      // @ts-ignore - accessing code property that may exist on some error types
+      console.log('🔍 Error code:', depositError?.code);
       // @ts-ignore - details might exist on some error types
       console.log('🔍 Error details:', depositError?.details);
       
       // Check if this is a user cancellation (don't show error for cancellations)
       const errorMessage = depositError?.message || '';
-      const isUserCancellation = errorMessage.includes('user rejected') || 
+      // @ts-ignore - accessing code property that may exist on some error types
+      const errorCode = depositError?.code?.toString() || '';
+      
+      // Check for user cancellation with code 4001 or message patterns
+      const isUserCancellation = errorCode === '4001' ||
+                                errorMessage.includes('user rejected') || 
                                 errorMessage.includes('User denied') ||
                                 errorMessage.includes('cancelled') ||
                                 errorMessage.includes('rejected') ||
                                 errorMessage.includes('denied transaction signature');
+      
+      console.log('🔍 User cancellation check:', {
+        errorCode,
+        errorMessage,
+        isUserCancellation
+      });
       
       if (!isUserCancellation) {
         // Set user-friendly error message only for non-cancellation errors
@@ -458,7 +561,7 @@ export const useSafeVault = () => {
           setTransactionError(`Transaction failed: ${errorMessage}`);
         }
       } else {
-        console.log('🚫 User cancelled transaction - not showing error message');
+        console.log('🚫 User cancelled deposit transaction - not showing error message and resetting state');
         // Clear any existing error message for cancellations
         setTransactionError(null);
       }
@@ -495,16 +598,29 @@ export const useSafeVault = () => {
       console.log('❌ Withdraw confirmation error:', withdrawTotalError);
       console.log('🔍 Error type:', withdrawTotalError?.name);
       console.log('🔍 Error message:', withdrawTotalError?.message);
+      // @ts-ignore - accessing code property that may exist on some error types
+      console.log('🔍 Error code:', withdrawTotalError?.code);
       // @ts-ignore - details might exist on some error types
       console.log('🔍 Error details:', withdrawTotalError?.details);
       
       // Check if this is a user cancellation (don't show error for cancellations)
       const errorMessage = withdrawTotalError?.message || '';
-      const isUserCancellation = errorMessage.includes('user rejected') || 
+      // @ts-ignore - accessing code property that may exist on some error types
+      const errorCode = withdrawTotalError?.code?.toString() || '';
+      
+      // Check for user cancellation with code 4001 or message patterns
+      const isUserCancellation = errorCode === '4001' ||
+                                errorMessage.includes('user rejected') || 
                                 errorMessage.includes('User denied') ||
                                 errorMessage.includes('cancelled') ||
                                 errorMessage.includes('rejected') ||
                                 errorMessage.includes('denied transaction signature');
+      
+      console.log('🔍 User cancellation check:', {
+        errorCode,
+        errorMessage,
+        isUserCancellation
+      });
       
       if (!isUserCancellation) {
         // Set user-friendly error message only for non-cancellation errors
@@ -514,7 +630,7 @@ export const useSafeVault = () => {
           setTransactionError(`Transaction failed: ${errorMessage}`);
         }
       } else {
-        console.log('🚫 User cancelled transaction - not showing error message');
+        console.log('🚫 User cancelled withdrawal transaction - not showing error message and resetting state');
         // Clear any existing error message for cancellations
         setTransactionError(null);
       }

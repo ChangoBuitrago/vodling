@@ -53,10 +53,11 @@ const DepositForm: React.FC = () => {
       
       if (err.message && err.message.includes('insufficient funds')) {
         userMessage = 'Insufficient funds. Please check your wallet balance and try a smaller amount.';
-      } else if ((err.message && (err.message.includes('user rejected') || err.message.includes('User denied') || err.message.includes('cancelled') || err.message.includes('denied transaction signature'))) || err.code === 4001) {
+      } else if (err.code === 4001 || (err.message && (err.message.includes('user rejected') || err.message.includes('User denied') || err.message.includes('cancelled') || err.message.includes('denied transaction signature')))) {
         // Don't show error message for user cancellations - just reset the form
-        console.log('🚫 User cancelled transaction - resetting form');
+        console.log('🚫 User cancelled deposit transaction - resetting form');
         setError('');
+        setAmount(''); // Clear the amount field
         return;
       } else if (err.message && err.message.includes('network')) {
         userMessage = 'Network error. Please check your connection and try again.';
