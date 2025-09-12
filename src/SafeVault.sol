@@ -37,8 +37,6 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     /// @dev Mapping of user address to their stETH shares at deposit time
     mapping(address => uint256) public userStETHShares;
     
-    /// @dev Mapping of user address to their original principal in ETH (for yield calculation)
-    mapping(address => uint256) public userPrincipalETH;
     
     /// @dev Minimum deposit amount (in wei)
     uint256 public minDeposit = 0.001 ether;
@@ -83,14 +81,11 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     
     /**
      * @dev Deposit ETH and stake via Lido
-     * @param amount Amount of ETH to deposit
+     * Uses msg.value as the deposit amount
      */
-    function deposit(uint256 amount) external payable nonReentrant whenNotPaused {
-        if (msg.value != amount) revert InvalidAmount();
+    function deposit() external payable nonReentrant whenNotPaused {
+        uint256 amount = msg.value;
         if (amount < minDeposit || amount > maxDeposit) revert InvalidAmount();
-        
-        // Get current stETH shares before deposit
-        uint256 sharesBefore = lido.sharesOf(address(this));
         
         // Stake ETH with Lido
         uint256 stETHSharesReceived = lido.submit{value: amount}(address(0));
@@ -98,7 +93,6 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         // Update user's principal balance and track their stETH shares
         principalBalance[msg.sender] = principalBalance[msg.sender] + amount;
         userStETHShares[msg.sender] = userStETHShares[msg.sender] + stETHSharesReceived;
-        userPrincipalETH[msg.sender] = userPrincipalETH[msg.sender] + amount;
         totalPrincipal = totalPrincipal + amount;
         
         emit Deposit(msg.sender, amount, stETHSharesReceived);
@@ -123,7 +117,6 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         // Update balances
         principalBalance[msg.sender] = principalBalance[msg.sender] - amount;
         userStETHShares[msg.sender] = userStETHShares[msg.sender] - sharesToWithdraw;
-        userPrincipalETH[msg.sender] = userPrincipalETH[msg.sender] - amount;
         totalPrincipal = totalPrincipal - amount;
         
         // Withdraw ETH from Lido (this will burn stETH and send ETH)
@@ -152,14 +145,13 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         uint256 sharesToWithdraw = (userStETHShares[msg.sender] * amount) / totalBalance;
         
         // Calculate the proportion of principal to reduce
-        uint256 principalToReduce = (userPrincipalETH[msg.sender] * amount) / totalBalance;
+        uint256 principalToReduce = (principalBalance[msg.sender] * amount) / totalBalance;
         
         // Get the actual ETH amount that will be received from Lido
         uint256 actualEthAmount = lido.getPooledEthByShares(sharesToWithdraw);
         
         // Update user's balances
         userStETHShares[msg.sender] = userStETHShares[msg.sender] - sharesToWithdraw;
-        userPrincipalETH[msg.sender] = userPrincipalETH[msg.sender] - principalToReduce;
         principalBalance[msg.sender] = principalBalance[msg.sender] - principalToReduce;
         totalPrincipal = totalPrincipal - principalToReduce;
         
@@ -196,7 +188,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         uint256 currentSharesValue = lido.getPooledEthByShares(userStETHShares[user]);
         
         // Get user's original principal in ETH
-        uint256 userPrincipal = userPrincipalETH[user];
+        uint256 userPrincipal = principalBalance[user];
         
         // Subtract principal from current value to get yield
         if (currentSharesValue > userPrincipal) {
@@ -227,14 +219,6 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         return price;
     }
     
-    /**
-     * @dev Get user's total balance (principal + yield)
-     * @param user User address
-     * @return Total balance in ETH equivalent
-     */
-    function getUserTotalBalance(address user) external view returns (uint256) {
-        return principalBalance[user] + getUserYield(user);
-    }
     
     /**
      * @dev Get user's actual withdrawable balance (same calculation as withdrawTotal uses)

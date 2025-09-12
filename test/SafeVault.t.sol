@@ -4,113 +4,27 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/SafeVault.sol";
+// ADD THESE IMPORTS
+import "../src/mocks/MockLido.sol";
+import "../src/mocks/MockChainlinkOracle.sol";
+// Keep these interfaces
 import "../src/interfaces/ILido.sol";
 import "../src/interfaces/IChainlinkOracle.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-
-// Mock contracts for testing
-contract MockLido is ILido {
-    uint256 public totalShares = 1000000 ether;
-    uint256 public totalPooledEther = 1000000 ether;
-    mapping(address => uint256) public userShares;
-    MockStETH public stETH;
-    
-    constructor() {
-        stETH = new MockStETH();
-    }
-    
-    function submit(address _referral) external payable override returns (uint256) {
-        uint256 shares = msg.value; // 1:1 for simplicity in tests
-        userShares[msg.sender] += shares;
-        totalShares += shares;
-        totalPooledEther += msg.value;
-        
-        // Mint stETH tokens to the caller
-        stETH.mint(msg.sender, shares);
-        
-        return shares;
-    }
-    
-    function getTotalShares() external view override returns (uint256) {
-        return totalShares;
-    }
-    
-    function getTotalPooledEther() external view override returns (uint256) {
-        return totalPooledEther;
-    }
-    
-    function sharesOf(address _account) external view override returns (uint256) {
-        return userShares[_account];
-    }
-    
-    function getSharesByPooledEth(uint256 _ethAmount) external view override returns (uint256) {
-        return _ethAmount; // 1:1 for simplicity
-    }
-    
-    function getPooledEthByShares(uint256 _sharesAmount) external view override returns (uint256) {
-        return _sharesAmount; // 1:1 for simplicity
-    }
-    
-    function withdraw(uint256 _sharesAmount) external override {
-        require(userShares[msg.sender] >= _sharesAmount, "Insufficient stETH balance");
-        require(address(this).balance >= _sharesAmount, "Insufficient ETH in contract");
-        
-        // Update user shares
-        userShares[msg.sender] -= _sharesAmount;
-        totalShares -= _sharesAmount;
-        totalPooledEther -= _sharesAmount;
-        
-        // Transfer ETH to user
-        (bool success, ) = payable(msg.sender).call{value: _sharesAmount}("");
-        require(success, "ETH transfer failed");
-    }
+// Event definitions for testing
+interface ISafeVaultEvents {
+    event Deposit(address indexed user, uint256 amount, uint256 stETHShares);
+    event WithdrawPrincipal(address indexed user, uint256 amount, uint256 stETHShares);
+    event WithdrawTotal(address indexed user, uint256 amount, uint256 stETHShares);
+    event LimitsUpdated(uint256 minDeposit, uint256 maxDeposit);
 }
 
-contract MockStETH {
-    mapping(address => uint256) public balanceOf;
-    
-    function mint(address to, uint256 amount) external {
-        balanceOf[to] += amount;
-    }
-    
-    function transfer(address to, uint256 amount) external returns (bool) {
-        require(balanceOf[msg.sender] >= amount, "Insufficient balance");
-        balanceOf[msg.sender] -= amount;
-        balanceOf[to] += amount;
-        return true;
-    }
-    
-    function safeTransfer(address to, uint256 amount) external returns (bool) {
-        require(balanceOf[msg.sender] >= amount, "Insufficient balance");
-        balanceOf[msg.sender] -= amount;
-        balanceOf[to] += amount;
-        return true;
-    }
-}
-
-contract MockChainlinkOracle is IChainlinkOracle {
-    int256 public price = 2000 * 10**8; // $2000 ETH
-    
-    function latestRoundData()
-        external
-        view
-        override
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        )
-    {
-        return (1, price, block.timestamp, block.timestamp, 1);
-    }
-}
-
-contract SafeVaultTest is Test {
+contract SafeVaultTest is Test, ISafeVaultEvents {
     SafeVault public safeVault;
+    // CHANGE mockLido and mockStETH declarations
     MockLido public mockLido;
-    MockStETH public mockStETH;
+    IERC20 public mockStETH; // Use IERC20 interface
     MockChainlinkOracle public mockOracle;
     
     address public owner = address(0x1);
@@ -122,20 +36,21 @@ contract SafeVaultTest is Test {
     function setUp() public {
         // Deploy mock contracts
         mockLido = new MockLido();
-        mockStETH = mockLido.stETH(); // Use the stETH from MockLido
+        mockStETH = IERC20(address(mockLido)); // The mock is also the stETH token
         mockOracle = new MockChainlinkOracle();
         
         // Deploy SafeVault
         vm.prank(owner);
         safeVault = new SafeVault(
             address(mockLido),
-            address(mockStETH),
+            address(mockStETH), // Pass the same address
             address(mockOracle)
         );
         
-        // Fund users
+        // Fund users and the mock Lido contract so it can handle withdrawals
         vm.deal(user1, INITIAL_ETH);
         vm.deal(user2, INITIAL_ETH);
+        vm.deal(address(mockLido), 100 ether); // Fund Lido for withdrawals
     }
     
     // ============ Deposit Tests ============
@@ -144,7 +59,7 @@ contract SafeVaultTest is Test {
         uint256 depositAmount = 1 ether;
         
         vm.prank(user1);
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
         
         assertEq(safeVault.principalBalance(user1), depositAmount);
         assertEq(safeVault.totalPrincipal(), depositAmount);
@@ -156,10 +71,10 @@ contract SafeVaultTest is Test {
         uint256 deposit2 = 2 ether;
         
         vm.prank(user1);
-        safeVault.deposit{value: deposit1}(deposit1);
+        safeVault.deposit{value: deposit1}();
         
         vm.prank(user2);
-        safeVault.deposit{value: deposit2}(deposit2);
+        safeVault.deposit{value: deposit2}();
         
         assertEq(safeVault.principalBalance(user1), deposit1);
         assertEq(safeVault.principalBalance(user2), deposit2);
@@ -167,11 +82,11 @@ contract SafeVaultTest is Test {
     }
     
     function testDepositBelowMinimum() public {
-        uint256 depositAmount = 0.005 ether; // Below 0.01 ether minimum
+        uint256 depositAmount = 0.0005 ether; // Below 0.001 ether minimum
         
         vm.prank(user1);
         vm.expectRevert(SafeVault.InvalidAmount.selector);
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
     }
     
     function testDepositAboveMaximum() public {
@@ -182,16 +97,9 @@ contract SafeVaultTest is Test {
         
         vm.prank(user1);
         vm.expectRevert(SafeVault.InvalidAmount.selector);
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
     }
     
-    function testDepositWrongValue() public {
-        uint256 depositAmount = 1 ether;
-        
-        vm.prank(user1);
-        vm.expectRevert(SafeVault.InvalidAmount.selector);
-        safeVault.deposit{value: 0.5 ether}(depositAmount);
-    }
     
     // ============ Withdrawal Tests ============
     
@@ -200,7 +108,7 @@ contract SafeVaultTest is Test {
         
         // Deposit first
         vm.prank(user1);
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
         
         // Withdraw half
         uint256 withdrawAmount = 0.5 ether;
@@ -215,7 +123,7 @@ contract SafeVaultTest is Test {
         uint256 depositAmount = 1 ether;
         
         vm.prank(user1);
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
         
         uint256 withdrawAmount = 2 ether;
         vm.prank(user1);
@@ -223,24 +131,59 @@ contract SafeVaultTest is Test {
         safeVault.withdrawPrincipal(withdrawAmount);
     }
     
-    function testWithdrawYield() public {
+    // Add these new test functions to your SafeVaultTest contract
+
+    function test_Yield_AccruesOverTime() public {
         uint256 depositAmount = 1 ether;
-        
-        // Deposit
+
+        // User 1 deposits 1 ETH
         vm.prank(user1);
-        safeVault.deposit{value: depositAmount}(depositAmount);
-        
-        // Simulate yield by increasing stETH value
-        // In a real scenario, this would happen over time through staking rewards
-        
-        // For now, we'll test the function exists and works with zero yield
+        safeVault.deposit{value: depositAmount}();
+
+        // Initially, yield should be zero
+        assertEq(safeVault.getUserYield(user1), 0, "Initial yield should be 0");
+
+        // Simulate 30 days passing by fast-forwarding the block timestamp
+        uint256 thirtyDays = 30 days;
+        vm.warp(block.timestamp + thirtyDays);
+
+        // To see the yield, the mock's state needs to be updated.
+        // We can trigger this by calling the public updateYield function.
+        mockLido.updateYield();
+
+        // Now, the user's yield should be greater than zero
         uint256 yield = safeVault.getUserYield(user1);
-        assertEq(yield, 0);
-        
-        // Try to withdraw yield (should work with 0 amount)
-        // Note: withdrawYield function doesn't exist, commenting out test
-        // vm.prank(user1);
-        // safeVault.withdrawYield(0);
+        assertTrue(yield > 0, "Yield after 30 days should be positive");
+
+        console.log("User 1 Yield after 30 days:", yield);
+    }
+
+    function test_Withdraw_TotalBalanceWithYield() public {
+        uint256 depositAmount = 10 ether;
+        uint256 user1InitialBalance = address(user1).balance;
+
+        // User 1 deposits 10 ETH
+        vm.prank(user1);
+        safeVault.deposit{value: depositAmount}();
+
+        // Simulate 365 days of yield
+        vm.warp(block.timestamp + 365 days);
+        mockLido.updateYield();
+
+        // Get the user's total balance (principal + yield)
+        uint256 totalBalance = safeVault.getUserActualWithdrawableBalance(user1);
+        assertTrue(totalBalance > depositAmount, "Total balance must be greater than initial deposit");
+
+        // User 1 withdraws their entire balance
+        vm.prank(user1);
+        safeVault.withdrawTotal(totalBalance);
+
+        // Check user's final ETH balance
+        uint256 user1FinalBalance = address(user1).balance;
+        // The final balance should be approximately the initial balance minus gas costs
+        // and plus the yield, since they got their principal back.
+        assertTrue(user1FinalBalance > user1InitialBalance - 0.1 ether, "User's final balance should reflect returned principal + yield");
+        assertEq(safeVault.principalBalance(user1), 0, "User principal should be zero after full withdrawal");
     }
     
     // ============ View Function Tests ============
@@ -249,18 +192,18 @@ contract SafeVaultTest is Test {
         uint256 depositAmount = 1 ether;
         
         vm.prank(user1);
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
         
-        uint256 totalBalance = safeVault.getUserTotalBalance(user1);
+        uint256 totalBalance = safeVault.getUserActualWithdrawableBalance(user1);
         assertEq(totalBalance, depositAmount); // No yield yet
     }
     
-    function testGetTotalYield() public {
+    function testGetTotalYield() public view {
         uint256 totalYield = safeVault.getTotalYield();
         assertEq(totalYield, 0); // No yield initially
     }
     
-    function testGetETHPrice() public {
+    function testGetETHPrice() public view {
         int256 price = safeVault.getETHPrice();
         assertEq(price, 2000 * 10**8); // $2000 from mock
     }
@@ -295,7 +238,7 @@ contract SafeVaultTest is Test {
         // Try to deposit while paused
         vm.prank(user1);
         vm.expectRevert();
-        safeVault.deposit{value: 1 ether}(1 ether);
+        safeVault.deposit{value: 1 ether}();
         
         // Unpause
         vm.prank(owner);
@@ -303,7 +246,7 @@ contract SafeVaultTest is Test {
         
         // Should work now
         vm.prank(user1);
-        safeVault.deposit{value: 1 ether}(1 ether);
+        safeVault.deposit{value: 1 ether}();
     }
     
     function testEmergencyRecover() public {
@@ -338,9 +281,13 @@ contract SafeVaultTest is Test {
     function testDepositEvent() public {
         uint256 depositAmount = 1 ether;
         
+        // Expect the Deposit event to be emitted with correct parameters
+        vm.expectEmit(true, true, false, true);
+        emit Deposit(user1, depositAmount, depositAmount);
+        
+        // Perform the deposit
         vm.prank(user1);
-        // Just test that deposit works, event testing can be added later
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
         
         // Verify the deposit was successful
         assertEq(safeVault.principalBalance(user1), depositAmount);
@@ -352,7 +299,11 @@ contract SafeVaultTest is Test {
         
         // Deposit first
         vm.prank(user1);
-        safeVault.deposit{value: depositAmount}(depositAmount);
+        safeVault.deposit{value: depositAmount}();
+        
+        // Expect the WithdrawPrincipal event to be emitted
+        vm.expectEmit(true, true, false, true);
+        emit WithdrawPrincipal(user1, withdrawAmount, withdrawAmount);
         
         // Withdraw
         vm.prank(user1);
@@ -365,6 +316,10 @@ contract SafeVaultTest is Test {
     function testLimitsUpdatedEvent() public {
         uint256 newMin = 0.1 ether;
         uint256 newMax = 500 ether;
+        
+        // Expect the LimitsUpdated event to be emitted
+        vm.expectEmit(false, false, false, true);
+        emit LimitsUpdated(newMin, newMax);
         
         vm.prank(owner);
         safeVault.setDepositLimits(newMin, newMax);

@@ -116,22 +116,11 @@ contract MockLido is ERC20, ILido {
      * @dev Fast forward time for testing (only in mock)
      */
     function fastForwardTime(uint256 _seconds) external {
-        // Update the lastUpdateTime to simulate time passing
-        // This will make the yield calculation think more time has passed
-        // Use unchecked to avoid underflow issues in testing
-        unchecked {
-            if (_seconds > block.timestamp) {
-                lastUpdateTime = 0;
-            } else {
-                lastUpdateTime = block.timestamp - _seconds;
-            }
-        }
-        
-        // Also apply the yield to totalPooledEth to make it persistent
-        if (totalPooledEth > 0) {
-            uint256 yieldMultiplier = 1e18 + (YIELD_RATE_PER_DAY * _seconds) / 1 days;
-            totalPooledEth = (totalPooledEth * yieldMultiplier) / 1e18;
-        }
+        // This is a deprecated way to handle time. `vm.warp` is preferred.
+        // However, to fix the logic, we just adjust the last update time.
+        // The next call to _updateYield() will then calculate the interest
+        // over the simulated elapsed time.
+        lastUpdateTime -= _seconds;
     }
     
     /**
