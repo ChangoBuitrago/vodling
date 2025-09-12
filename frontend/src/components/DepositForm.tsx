@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { useSafeVault } from '../hooks/useSafeVault';
+import { useGasEstimation } from '../hooks/useGasEstimation';
 import { parseEther, formatEther } from 'ethers';
 import TransactionLoader from './TransactionLoader';
 import { useFadeIn, useGlowEffect } from '../hooks/useAnimations';
@@ -20,6 +21,8 @@ const DepositForm: React.FC = () => {
     transactionError,
     clearTransactionError
   } = useSafeVault();
+  
+  const { calculateMaxDepositAmount, isEstimating: isEstimatingGas } = useGasEstimation();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -60,71 +63,59 @@ const DepositForm: React.FC = () => {
       console.error('Deposit error:', err);
       
       // Handle specific errors with better messaging
+      let userMessage = 'Deposit failed. Please try again.';
+      
       if (err.message && err.message.includes('Insufficient funds for gas')) {
-        setError('Insufficient ETH for gas fees. For large transactions, you need more ETH reserved for gas. Try using the MAX button or depositing a smaller amount.');
+        userMessage = 'Insufficient ETH for gas fees. The MAX button will calculate the optimal amount. Try using it or deposit a smaller amount.';
       } else if (err.message && err.message.includes('insufficient funds')) {
-        setError('Insufficient funds for gas fees. Try depositing a smaller amount to leave more ETH for gas costs.');
+        userMessage = 'Insufficient funds for gas fees. Try using the MAX button to calculate the optimal deposit amount.';
       } else if (err.message && (err.message.includes('gas') || err.message.includes('out of gas'))) {
-        setError('Transaction failed due to gas issues. The system tried multiple gas limits but couldn\'t complete the transaction. Please try again or contact support.');
+        userMessage = 'Transaction failed due to gas issues. The system tried multiple gas limits but couldn\'t complete the transaction. Please try again.';
       } else if (err.message && err.message.includes('custom error')) {
-        setError('Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try depositing a smaller amount.');
+        userMessage = 'Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try a smaller amount.';
       } else if (err.message && err.message.includes('execution reverted')) {
-        setError('Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try depositing a smaller amount.');
+        userMessage = 'Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try a smaller amount.';
       } else if (err.message && err.message.includes('total cost') && err.message.includes('exceeds the balance')) {
-        setError('Transaction failed: The total cost (gas + value) exceeds your balance. For large deposits, more ETH is needed for gas fees. Try using the MAX button or depositing a smaller amount.');
-      } else {
-        setError(err.message || 'Deposit failed');
+        userMessage = 'Transaction failed: The total cost (gas + value) exceeds your balance. Use the MAX button to calculate the optimal amount.';
+      } else if (err.message && err.message.includes('user rejected')) {
+        userMessage = 'Transaction was cancelled by user.';
+      } else if (err.message && err.message.includes('network')) {
+        userMessage = 'Network error. Please check your connection and try again.';
+      } else if (err.message) {
+        userMessage = `Transaction failed: ${err.message}`;
       }
+      
+      setError(userMessage);
     }
   };
 
-  const handleMaxClick = () => {
-    // Use the wallet balance but leave a dynamic buffer for gas costs
+  const handleMaxClick = async () => {
     const walletBalanceWei = walletBalance?.value as bigint;
     
-    // Calculate a more conservative buffer based on the transaction size
-    // For large transactions, we need more gas buffer
-    const baseBuffer = parseEther('0.15'); // Base buffer
-    const largeTransactionSize = parseEther('1000'); // Consider transactions over 1000 ETH as "large"
-    const veryLargeTransactionSize = parseEther('5000'); // Consider transactions over 5000 ETH as "very large"
-    const extremelyLargeTransactionSize = parseEther('8000'); // Consider transactions over 8000 ETH as "extremely large"
-    
-    // If the wallet balance is very large, use a more conservative approach
-    let bufferAmount = baseBuffer;
-    if (walletBalanceWei > extremelyLargeTransactionSize) {
-      // For extremely large balances (>8000 ETH), use an exponential buffer (2% of balance, minimum 2 ETH)
-      const percentageBuffer = walletBalanceWei / 50n; // 2%
-      const minBuffer = parseEther('2');
-      bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-    } else if (walletBalanceWei > veryLargeTransactionSize) {
-      // For very large balances (5000-8000 ETH), use a higher percentage buffer (1% of balance, minimum 1 ETH)
-      const percentageBuffer = walletBalanceWei / 100n; // 1%
-      const minBuffer = parseEther('1');
-      bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-    } else if (walletBalanceWei > largeTransactionSize) {
-      // For large balances (1000-5000 ETH), use a moderate percentage buffer (0.5% of balance, minimum 0.5 ETH)
-      const percentageBuffer = walletBalanceWei / 200n; // 0.5%
-      const minBuffer = parseEther('0.5');
-      bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+    if (!walletBalanceWei || walletBalanceWei === 0n) {
+      setError('No balance available');
+      return;
     }
-    
-    const availableAmount = walletBalanceWei - bufferAmount;
-    
-    console.log('🔍 MAX Button Debug (Dynamic Buffer):');
-    console.log(`  - Wallet balance: ${formatEther(walletBalanceWei)} ETH`);
-    console.log(`  - Base buffer: ${formatEther(baseBuffer)} ETH`);
-    console.log(`  - Dynamic buffer: ${formatEther(bufferAmount)} ETH`);
-    console.log(`  - Available amount: ${formatEther(availableAmount)} ETH`);
-    console.log(`  - Final max amount: ${formatEther(availableAmount)} ETH`);
-    console.log(`  - Remaining for gas: ${formatEther(bufferAmount)} ETH`);
-    console.log(`  - Buffer percentage: ${((Number(bufferAmount) / Number(walletBalanceWei)) * 100).toFixed(2)}%`);
-    
-    if (availableAmount > 0n) {
-      setAmount(formatEther(availableAmount));
-    } else {
-      // If balance is too small, don't set any amount
-      setAmount('');
-      setError(`Insufficient balance. You need at least ${formatEther(bufferAmount)} ETH for gas fees and timing buffer.`);
+
+    try {
+      console.log('🔍 MAX Button - Calculating optimal deposit amount...');
+      console.log(`  - Wallet balance: ${formatEther(walletBalanceWei)} ETH`);
+      
+      // Use the new gas estimation to calculate the exact maximum amount
+      const maxDepositAmount = await calculateMaxDepositAmount(walletBalanceWei);
+      
+      console.log(`  - Max deposit amount (after gas): ${formatEther(maxDepositAmount)} ETH`);
+      
+      if (maxDepositAmount > 0n) {
+        setAmount(formatEther(maxDepositAmount));
+        setError(''); // Clear any previous errors
+      } else {
+        setAmount('');
+        setError('Insufficient balance for gas fees. You need more ETH to cover transaction costs.');
+      }
+    } catch (error: any) {
+      console.error('❌ Error calculating max deposit amount:', error);
+      setError('Failed to calculate maximum deposit amount. Please try a smaller amount.');
     }
   };
 
@@ -241,9 +232,21 @@ const DepositForm: React.FC = () => {
               <button
                 type="button"
                 onClick={handleMaxClick}
-                className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded transition-colors text-gray-300"
+                disabled={isEstimatingGas}
+                className={`px-2 py-1 text-xs rounded transition-colors ${
+                  isEstimatingGas 
+                    ? 'bg-gray-500 cursor-not-allowed text-gray-400' 
+                    : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                }`}
               >
-                Max
+                {isEstimatingGas ? (
+                  <div className="flex items-center space-x-1">
+                    <i className="fas fa-spinner animate-spin text-xs"></i>
+                    <span>...</span>
+                  </div>
+                ) : (
+                  'Max'
+                )}
               </button>
               <span className="text-gray-400 text-sm">ETH</span>
             </div>

@@ -36,17 +36,8 @@ export const useSafeVault = () => {
     },
   });
 
-  const { data: totalBalance = 0n, refetch: refetchTotalBalance } = useContractRead({
-    address: safeVaultContract?.address as `0x${string}` | undefined,
-    abi: safeVaultContract?.abi,
-    functionName: 'getUserTotalBalance',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address,
-      refetchInterval: false, // Disable automatic refetch
-      staleTime: 0, // Always consider data stale
-    },
-  });
+  // Calculate total balance as principal + yield (since getUserTotalBalance doesn't exist in contract)
+  const totalBalance = (principalBalance as bigint) + (yieldBalance as bigint);
 
   // Get the actual withdrawable balance from the contract (same calculation as withdrawTotal uses)
   const { data: actualWithdrawableBalance = 0n, refetch: refetchActualBalance } = useContractRead({
@@ -154,13 +145,12 @@ export const useSafeVault = () => {
     console.log('Current balances before refetch:');
     console.log('  - Principal:', formatEther(principalBalance as bigint), 'ETH');
     console.log('  - Yield:', formatEther(yieldBalance as bigint), 'ETH');
-    console.log('  - Total:', formatEther(totalBalance as bigint), 'ETH');
+    console.log('  - Total:', formatEther(totalBalance), 'ETH');
     
     try {
       const results = await Promise.all([
         refetchPrincipalBalance(),
         refetchYieldBalance(),
-        refetchTotalBalance(),
         refetchActualBalance(),
         refetchTotalPrincipal(),
         refetchTotalYield(),
@@ -194,7 +184,7 @@ export const useSafeVault = () => {
     } catch (error) {
       console.error('❌ Error during refetch:', error);
     }
-  }, [refetchPrincipalBalance, refetchYieldBalance, refetchTotalBalance, refetchActualBalance, refetchTotalPrincipal, refetchTotalYield, safeVaultContract?.address, address, principalBalance, yieldBalance, totalBalance]);
+  }, [refetchPrincipalBalance, refetchYieldBalance, refetchActualBalance, refetchTotalPrincipal, refetchTotalYield, safeVaultContract?.address, address, principalBalance, yieldBalance, totalBalance]);
 
   // Manual refetch only - no automatic intervals
 
@@ -231,7 +221,6 @@ export const useSafeVault = () => {
             address: safeVaultContract?.address as `0x${string}`,
             abi: safeVaultContract?.abi,
             functionName: 'deposit',
-            args: [amount],
             value: amount,
             gas: gasLimit,
           });
@@ -357,12 +346,15 @@ export const useSafeVault = () => {
       // Get fresh balance data right before transaction
       console.log('🔍 Getting fresh balance data before transaction...');
       const freshBalanceData = await Promise.all([
-        refetchTotalBalance(),
+        refetchPrincipalBalance(),
+        refetchYieldBalance(),
         refetchActualBalance(),
       ]);
       
-      const freshTotalBalance = freshBalanceData[0]?.data as bigint;
-      const freshActualBalance = freshBalanceData[1]?.data as bigint;
+      const freshPrincipalBalance = freshBalanceData[0]?.data as bigint;
+      const freshYieldBalance = freshBalanceData[1]?.data as bigint;
+      const freshActualBalance = freshBalanceData[2]?.data as bigint;
+      const freshTotalBalance = (freshPrincipalBalance || 0n) + (freshYieldBalance || 0n);
       
       console.log('🔍 Fresh Balance Data:');
       console.log(`  - Fresh total balance: ${formatEther(freshTotalBalance)} ETH`);

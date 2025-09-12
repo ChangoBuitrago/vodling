@@ -1,19 +1,19 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E', // Local development - updated with new getUserActualWithdrawableBalance function
+  LOCAL: '0xa82ff9afd8f496c3d6ac40e2a0f282e47488cfc9', // Local development - auto-updated - updated with new getUserActualWithdrawableBalance function
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0xc5a5C42992dECbae36851359345FE25997F5C42d', // Local development - updated with new deployment
+  LOCAL: '0x84ea74d481ee0a5332c457a4d796187f6ba67feb', // Local development - auto-updated - updated with new deployment
 };
 
 export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x67d269191c92Caf3cD7723F116c85e6E9bf55933', // Local development - updated with new deployment
+  LOCAL: '0x9e545e3c0baab3e08cdfd552c960a1050f373042', // Local development - auto-updated - updated with new deployment
 };
 
 export const SAFE_VAULT_ABI = [
@@ -136,7 +136,7 @@ export const SAFE_VAULT_ABI = [
     "type": "event"
   },
   {
-    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "inputs": [],
     "name": "deposit",
     "outputs": [],
     "stateMutability": "payable",
