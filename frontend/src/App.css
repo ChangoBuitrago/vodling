@@ -55,9 +55,106 @@
   background: rgba(168, 139, 250, 0.5);
 }
 
+/* Dual Action Buttons */
+.grid-cols-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Enhanced button styling for dual action layout */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Helper text styling */
+.helper-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* Enhanced balance display */
+.balance-display {
+  padding: 16px;
+  margin: 16px 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.balance-display h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.balance-display .space-y-2 > * + * {
+  margin-top: 8px;
+}
+
+/* Minimalist balance styling */
+.balance-minimal {
+  text-align: left;
+  padding: 8px 0;
+}
+
+.balance-minimal span {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+/* Etherscan link styling */
+.etherscan-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.etherscan-link:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  text-decoration: none;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 640px) {
   .testing-tools-sidebar {
     /* Mobile styles handled by Tailwind classes */
+  }
+  
+  .toggle-btn {
+    padding: 10px 12px;
+    font-size: 13px;
   }
 }

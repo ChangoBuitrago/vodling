@@ -6,8 +6,7 @@ import { injected, metaMask } from 'wagmi/connectors';
 import './App.css';
 
 import Header from './components/Header';
-import DepositForm from './components/DepositForm';
-import WithdrawForm from './components/WithdrawForm';
+import TransactionForm from './components/TransactionForm';
 import BalanceCard from './components/BalanceCard';
 import YieldTester from './components/YieldTester';
 import { Web3Provider } from './contexts/Web3Context';
@@ -71,8 +70,7 @@ function App() {
               {/* Main Content - User Actions */}
               <div className="space-y-6">
                 <BalanceCard />
-                <DepositForm />
-                <WithdrawForm />
+                <TransactionForm />
               </div>
             </div>
           </main>

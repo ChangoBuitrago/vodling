@@ -1,19 +1,19 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x1fa02b2d6a771842690194cf62d91bdd92bfe28d', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new getUserActualWithdrawableBalance function
+  LOCAL: '0x21df544947ba3e8b3c32561399e88b52dc8b2823', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new getUserActualWithdrawableBalance function
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x922d6956c99e12dfeb3224dea977d0939758a1fe', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x04c89607413713ec9775e14b954286519d836fef', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x5081a39b8a5f0e35a8d959395a630b68b74dd30f', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x4c4a2f8c81640e47606d3fd77b353e87ba015584', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const SAFE_VAULT_ABI = [
