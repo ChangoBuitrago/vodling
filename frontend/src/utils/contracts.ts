@@ -1,19 +1,19 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xa82ff9afd8f496c3d6ac40e2a0f282e47488cfc9', // Local development - auto-updated - updated with new getUserActualWithdrawableBalance function
+  LOCAL: '0x1291be112d480055dafd8a610b7d1e203891c274', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new getUserActualWithdrawableBalance function
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x84ea74d481ee0a5332c457a4d796187f6ba67feb', // Local development - auto-updated - updated with new deployment
+  LOCAL: '0x809d550fca64d94bd9f66e60752a544199cfac3d', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x9e545e3c0baab3e08cdfd552c960a1050f373042', // Local development - auto-updated - updated with new deployment
+  LOCAL: '0x4c5859f0f772848b2d91f1d83e2fe57935348029', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const SAFE_VAULT_ABI = [

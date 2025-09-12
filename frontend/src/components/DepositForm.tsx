@@ -5,6 +5,7 @@ import { useGasEstimation } from '../hooks/useGasEstimation';
 import { parseEther, formatEther } from 'ethers';
 import TransactionLoader from './TransactionLoader';
 import { useFadeIn, useGlowEffect } from '../hooks/useAnimations';
+import { formatEtherDisplay } from '../utils/precision';
 
 const DepositForm: React.FC = () => {
   const { isConnected, address } = useAccount();
@@ -26,9 +27,31 @@ const DepositForm: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [maxAmountWei, setMaxAmountWei] = useState<bigint | null>(null);
+  const [availableAmountWei, setAvailableAmountWei] = useState<bigint | null>(null);
   
   const fadeInRef = useFadeIn(0.4);
   const glowRef = useGlowEffect('#10B981');
+
+  // Calculate available amount when wallet balance changes
+  React.useEffect(() => {
+    const calculateAvailableAmount = async () => {
+      if (!walletBalance?.value) {
+        setAvailableAmountWei(null);
+        return;
+      }
+
+      try {
+        const availableAmount = await calculateMaxDepositAmount(walletBalance.value);
+        setAvailableAmountWei(availableAmount);
+      } catch (error) {
+        console.error('Failed to calculate available amount:', error);
+        setAvailableAmountWei(null);
+      }
+    };
+
+    calculateAvailableAmount();
+  }, [walletBalance?.value, calculateMaxDepositAmount]);
 
   const handleDeposit = async () => {
     if (!amount) {
@@ -37,7 +60,15 @@ const DepositForm: React.FC = () => {
     }
 
     try {
-      const amountWei = parseEther(amount);
+      // Use the stored BigInt value if available (from MAX button), otherwise parse the string
+      let amountWei: bigint;
+      if (maxAmountWei) {
+        amountWei = maxAmountWei;
+      } else {
+        // Normalize decimal separator (comma to period) for parsing
+        const normalizedAmount = amount.replace(',', '.');
+        amountWei = parseEther(normalizedAmount);
+      }
       const balance = walletBalance?.value as bigint;
       
       console.log('🔍 Deposit Total Debug:');
@@ -90,32 +121,23 @@ const DepositForm: React.FC = () => {
   };
 
   const handleMaxClick = async () => {
-    const walletBalanceWei = walletBalance?.value as bigint;
-    
-    if (!walletBalanceWei || walletBalanceWei === 0n) {
+    if (!availableAmountWei || availableAmountWei === 0n) {
       setError('No balance available');
       return;
     }
 
     try {
-      console.log('🔍 MAX Button - Calculating optimal deposit amount...');
-      console.log(`  - Wallet balance: ${formatEther(walletBalanceWei)} ETH`);
+      console.log('🔍 MAX Button - Using calculated available amount...');
+      console.log(`  - Available amount: ${formatEther(availableAmountWei)} ETH`);
       
-      // Use the new gas estimation to calculate the exact maximum amount
-      const maxDepositAmount = await calculateMaxDepositAmount(walletBalanceWei);
-      
-      console.log(`  - Max deposit amount (after gas): ${formatEther(maxDepositAmount)} ETH`);
-      
-      if (maxDepositAmount > 0n) {
-        setAmount(formatEther(maxDepositAmount));
-        setError(''); // Clear any previous errors
-      } else {
-        setAmount('');
-        setError('Insufficient balance for gas fees. You need more ETH to cover transaction costs.');
-      }
+      // Use the pre-calculated available amount
+      setMaxAmountWei(availableAmountWei);
+      setAmount(formatEtherDisplay(availableAmountWei));
+      setError(''); // Clear any previous errors
     } catch (error: any) {
-      console.error('❌ Error calculating max deposit amount:', error);
-      setError('Failed to calculate maximum deposit amount. Please try a smaller amount.');
+      console.error('❌ Error setting max amount:', error);
+      setMaxAmountWei(null);
+      setError('Failed to set maximum amount. Please try again.');
     }
   };
 
@@ -123,6 +145,7 @@ const DepositForm: React.FC = () => {
   React.useEffect(() => {
     if (isDepositSuccess) {
       setAmount('');
+      setMaxAmountWei(null);
       setError('');
       setShowSuccess(true);
       
@@ -194,16 +217,19 @@ const DepositForm: React.FC = () => {
           </label>
           <div className="relative">
             <input
-              type="number"
+              type="text"
               id="deposit-amount"
               value={amount}
               onChange={(e) => {
-                setAmount(e.target.value);
+                // Only allow numbers, decimal point, and comma (for locale compatibility)
+                const value = e.target.value.replace(/[^0-9.,]/g, '');
+                setAmount(value);
+                setMaxAmountWei(null); // Clear stored BigInt value when user manually changes amount
                 setError('');
                 clearTransactionError(); // Clear transaction error when user changes amount
               }}
               placeholder="0.0"
-              step="0.001"
+              inputMode="decimal"
               max={walletBalance ? (() => {
                 const walletBalanceWei = walletBalance.value;
                 const baseBuffer = parseEther('0.15');
@@ -224,7 +250,9 @@ const DepositForm: React.FC = () => {
                   const minBuffer = parseEther('0.5');
                   bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
                 }
-                return parseFloat(formatEther(walletBalanceWei - bufferAmount));
+                // Use BigInt math and convert to number only at the end to avoid precision errors
+                const maxAmount = walletBalanceWei - bufferAmount;
+                return Number(formatEther(maxAmount));
               })() : undefined}
               className="form-input w-full px-4 py-3 pr-20 text-lg"
             />
@@ -256,28 +284,9 @@ const DepositForm: React.FC = () => {
           {walletBalance && (
             <div className="mt-3">
               <p className="text-sm text-gray-400">
-                Available for deposit: <span className="text-green-400 font-medium">{(() => {
-                  const walletBalanceWei = walletBalance.value;
-                  const baseBuffer = parseEther('0.15');
-                  const largeTransactionSize = parseEther('1000');
-                  const veryLargeTransactionSize = parseEther('5000');
-                  const extremelyLargeTransactionSize = parseEther('8000');
-                  let bufferAmount = baseBuffer;
-                  if (walletBalanceWei > extremelyLargeTransactionSize) {
-                    const percentageBuffer = walletBalanceWei / 50n;
-                    const minBuffer = parseEther('2');
-                    bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                  } else if (walletBalanceWei > veryLargeTransactionSize) {
-                    const percentageBuffer = walletBalanceWei / 100n;
-                    const minBuffer = parseEther('1');
-                    bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                  } else if (walletBalanceWei > largeTransactionSize) {
-                    const percentageBuffer = walletBalanceWei / 200n;
-                    const minBuffer = parseEther('0.5');
-                    bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                  }
-                  return parseFloat(formatEther(walletBalanceWei - bufferAmount)).toFixed(6);
-                })()} ETH</span>
+                Available for deposit: <span className="text-green-400 font-medium">
+                  {availableAmountWei ? formatEtherDisplay(availableAmountWei) : 'Calculating...'}
+                </span> ETH
               </p>
             </div>
           )}

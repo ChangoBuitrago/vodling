@@ -85,8 +85,8 @@ export const useGasEstimation = () => {
   }, [safeVaultContract, publicClient, address]);
 
   const calculateMaxDepositAmount = useCallback(async (walletBalance: bigint): Promise<bigint> => {
-    if (!publicClient || !address) {
-      console.log('Cannot calculate max deposit: missing client or address');
+    if (!publicClient || !address || !safeVaultContract?.address) {
+      console.log('Cannot calculate max deposit: missing client, address, or contract');
       return 0n;
     }
 
@@ -94,13 +94,38 @@ export const useGasEstimation = () => {
       console.log('🔍 Calculating max deposit amount...');
       console.log('  - Wallet balance:', formatEther(walletBalance), 'ETH');
 
-      // For now, use a simple conservative approach since gas estimation might be complex
-      // Use a fixed buffer that should be sufficient for most transactions
-      const baseBuffer = parseEther('0.01'); // 0.01 ETH buffer
-      const maxDepositAmount = walletBalance - baseBuffer;
+      if (walletBalance === 0n) {
+        return 0n;
+      }
+
+      // Create a realistic amount for gas estimation (99% of balance)
+      // This ensures the gas estimation runs on a transaction that is theoretically valid
+      const reasonableAmount = (walletBalance * 99n) / 100n;
       
-      console.log('  - Base buffer:', formatEther(baseBuffer), 'ETH');
-      console.log('  - Max deposit amount:', formatEther(maxDepositAmount), 'ETH');
+      console.log('  - Reasonable amount for gas estimation:', formatEther(reasonableAmount), 'ETH');
+
+      // Estimate gas on this more realistic amount
+      const gasLimit = await publicClient.estimateContractGas({
+        address: safeVaultContract.address as `0x${string}`,
+        abi: safeVaultContract.abi,
+        functionName: 'deposit',
+        args: [] as const,
+        value: reasonableAmount,
+        account: address as `0x${string}`,
+      });
+
+      // Get current gas price
+      const gasPrice = await publicClient.getGasPrice();
+      const estimatedGasFee = gasLimit * gasPrice;
+      
+      console.log('  - Gas limit:', gasLimit.toString());
+      console.log('  - Gas price:', gasPrice.toString());
+      console.log('  - Estimated gas fee:', formatEther(estimatedGasFee), 'ETH');
+
+      // Calculate the max deposit amount from the actual full balance
+      const maxDepositAmount = walletBalance - estimatedGasFee;
+      
+      console.log('  - Max deposit amount (after gas):', formatEther(maxDepositAmount), 'ETH');
 
       // Ensure we don't return a negative amount
       if (maxDepositAmount <= 0n) {
@@ -116,24 +141,19 @@ export const useGasEstimation = () => {
       const fallbackBuffer = parseEther('0.01');
       return walletBalance > fallbackBuffer ? walletBalance - fallbackBuffer : 0n;
     }
-  }, [publicClient, address]);
+  }, [publicClient, address, safeVaultContract]);
 
   const calculateMaxWithdrawAmount = useCallback(async (totalBalance: bigint): Promise<bigint> => {
-    if (!publicClient || !address) {
-      console.log('Cannot calculate max withdraw: missing client or address');
-      return 0n;
-    }
-
     try {
       console.log('🔍 Calculating max withdraw amount...');
-      console.log('  - Total balance:', formatEther(totalBalance), 'ETH');
+      console.log('  - Total withdrawable balance:', formatEther(totalBalance), 'ETH');
 
-      // Use a simple conservative approach
-      const baseBuffer = parseEther('0.01'); // 0.01 ETH buffer
-      const maxWithdrawAmount = totalBalance - baseBuffer;
+      // For withdrawals, the gas fee is paid from the user's wallet balance,
+      // NOT from the funds being withdrawn from the contract.
+      // Therefore, the MAX withdraw amount should be the full withdrawable balance.
+      const maxWithdrawAmount = totalBalance;
       
-      console.log('  - Base buffer:', formatEther(baseBuffer), 'ETH');
-      console.log('  - Max withdraw amount:', formatEther(maxWithdrawAmount), 'ETH');
+      console.log('  - Max withdraw amount (full balance):', formatEther(maxWithdrawAmount), 'ETH');
 
       // Ensure we don't return a negative amount
       if (maxWithdrawAmount <= 0n) {
@@ -145,11 +165,10 @@ export const useGasEstimation = () => {
 
     } catch (error: any) {
       console.error('❌ Failed to calculate max withdraw amount:', error);
-      // Fallback to a conservative buffer
-      const fallbackBuffer = parseEther('0.01');
-      return totalBalance > fallbackBuffer ? totalBalance - fallbackBuffer : 0n;
+      // Fallback to the full balance
+      return totalBalance;
     }
-  }, [publicClient, address]);
+  }, []);
 
   return {
     estimateDepositGas,

@@ -5,6 +5,7 @@ import { useGasEstimation } from '../hooks/useGasEstimation';
 import { parseEther, formatEther } from 'ethers';
 import TransactionLoader from './TransactionLoader';
 import { useFadeIn, useGlowEffect } from '../hooks/useAnimations';
+import { formatEtherDisplay } from '../utils/precision';
 
 const WithdrawForm: React.FC = () => {
   const { isConnected } = useAccount();
@@ -29,6 +30,7 @@ const WithdrawForm: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [maxAmountWei, setMaxAmountWei] = useState<bigint | null>(null);
   
   
   const fadeInRef = useFadeIn(0.4);
@@ -41,7 +43,15 @@ const WithdrawForm: React.FC = () => {
     }
 
     try {
-      const amountWei = parseEther(amount);
+      // Use the stored BigInt value if available (from MAX button), otherwise parse the string
+      let amountWei: bigint;
+      if (maxAmountWei) {
+        amountWei = maxAmountWei;
+      } else {
+        // Normalize decimal separator (comma to period) for parsing
+        const normalizedAmount = amount.replace(',', '.');
+        amountWei = parseEther(normalizedAmount);
+      }
       const balance = totalBalance as bigint;
       
       console.log('🔍 Withdraw Total Debug:');
@@ -120,17 +130,21 @@ const WithdrawForm: React.FC = () => {
       // Use the new gas estimation to calculate the exact maximum amount
       const maxWithdrawAmount = await calculateMaxWithdrawAmount(actualBalanceWei);
       
-      console.log(`  - Max withdraw amount (after gas): ${formatEther(maxWithdrawAmount)} ETH`);
+      console.log(`  - Max withdraw amount (full balance): ${formatEther(maxWithdrawAmount)} ETH`);
       
       if (maxWithdrawAmount > 0n) {
-        setAmount(formatEther(maxWithdrawAmount));
+        // Store the exact BigInt value to avoid floating-point precision issues
+        setMaxAmountWei(maxWithdrawAmount);
+        setAmount(formatEtherDisplay(maxWithdrawAmount));
         setError(''); // Clear any previous errors
       } else {
+        setMaxAmountWei(null);
         setAmount('');
-        setError('Insufficient balance for gas fees. You need more ETH to cover transaction costs.');
+        setError('No funds available for withdrawal.');
       }
     } catch (error: any) {
       console.error('❌ Error calculating max withdraw amount:', error);
+      setMaxAmountWei(null);
       setError('Failed to calculate maximum withdrawal amount. Please try a smaller amount.');
     }
   };
@@ -139,6 +153,7 @@ const WithdrawForm: React.FC = () => {
   React.useEffect(() => {
     if (isWithdrawTotalSuccess) {
       setAmount('');
+      setMaxAmountWei(null);
       setError('');
       setShowSuccess(true);
       
@@ -209,16 +224,19 @@ const WithdrawForm: React.FC = () => {
           </label>
           <div className="relative">
             <input
-              type="number"
+              type="text"
               id="withdraw-amount"
               value={amount}
               onChange={(e) => {
-                setAmount(e.target.value);
+                // Only allow numbers, decimal point, and comma (for locale compatibility)
+                const value = e.target.value.replace(/[^0-9.,]/g, '');
+                setAmount(value);
+                setMaxAmountWei(null); // Clear stored BigInt value when user manually changes amount
                 setError('');
                 clearTransactionError(); // Clear transaction error when user changes amount
               }}
               placeholder="0.0"
-              step="0.001"
+              inputMode="decimal"
               max={(() => {
                 const actualBalanceWei = actualWithdrawableBalance as bigint;
                 const baseBuffer = parseEther('0.15');
@@ -239,7 +257,9 @@ const WithdrawForm: React.FC = () => {
                   const minBuffer = parseEther('0.5');
                   bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
                 }
-                return parseFloat(formatEther(actualBalanceWei - bufferAmount));
+                // Use BigInt math and convert to number only at the end to avoid precision errors
+                const maxAmount = actualBalanceWei - bufferAmount;
+                return Number(formatEther(maxAmount));
               })()}
               className="form-input w-full px-4 py-3 pr-20 text-lg"
             />
@@ -290,7 +310,9 @@ const WithdrawForm: React.FC = () => {
                   const minBuffer = parseEther('0.5');
                   bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
                 }
-                return parseFloat(formatEther(actualBalanceWei - bufferAmount)).toFixed(6);
+                // Use BigInt math and convert to number only at the end to avoid precision errors
+                const displayAmount = actualBalanceWei - bufferAmount;
+                return Number(formatEther(displayAmount)).toFixed(6);
               })()} ETH</span>
             </p>
             {/* Gas estimation display removed due to viem compatibility issues */}
