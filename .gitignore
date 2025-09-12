@@ -106,3 +106,7 @@ broadcast/
 
 # Solidity
 *.sol.bak
+
+# Generated files
+combine_src.sh
+combined_codebase.ts
