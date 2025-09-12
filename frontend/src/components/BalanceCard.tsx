@@ -9,12 +9,11 @@ const BalanceCard: React.FC = () => {
   const { isConnected } = useAccount();
   const { 
     isLoading,
-    isWithdrawTotalLoading,
-    isRefreshing
+    isWithdrawTotalLoading
   } = useSafeVault();
   
   // Get balance state from Web3Context for immediate updates
-  const { balanceState } = useWeb3Context();
+  const { balanceState, refreshBalance, isRefreshing } = useWeb3Context();
   
   const fadeInRef = useFadeIn(0.2);
   const staggerRef = useStaggerChildren(0.4);
@@ -62,6 +61,14 @@ const BalanceCard: React.FC = () => {
             </span>
           )}
         </h3>
+        <button
+          onClick={refreshBalance}
+          disabled={isRefreshing}
+          className="ml-auto p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+          title="Refresh balances"
+        >
+          <i className={`fas fa-sync-alt ${isRefreshing ? 'animate-spin' : ''}`}></i>
+        </button>
       </div>
       
       <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -75,11 +82,25 @@ const BalanceCard: React.FC = () => {
             {parseFloat(formatEther(balanceState.principalBalance)).toFixed(4)} ETH
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            Your Original Deposit
+            Your Original Safe Deposit
           </p>
         </div>
 
-        {/* Total Balance */}
+        {/* Yield Only */}
+        <div className="strategy-card glass-effect p-6">
+          <div className="strategy-icon icon-bg-green mx-auto mb-4">
+            <i className="fas fa-seedling icon-text-green text-2xl"></i>
+          </div>
+          <p className="text-lg font-medium text-gray-400 mb-2">Yield Earned</p>
+          <p className="text-3xl font-bold text-gradient-green">
+            {parseFloat(formatEther(balanceState.yieldBalance)).toFixed(4)} ETH
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Earned from Vodling
+          </p>
+        </div>
+
+        {/* Total Balance + APY Combined */}
         <div className="strategy-card glass-effect p-6">
           <div className="strategy-icon icon-bg-vodl mx-auto mb-4">
             <i className="fas fa-chart-line icon-text-vodl text-2xl"></i>
@@ -89,40 +110,26 @@ const BalanceCard: React.FC = () => {
             {parseFloat(formatEther(balanceState.totalBalance)).toFixed(4)} ETH
           </p>
           
-          {/* Yield only */}
-          <div className="text-sm text-gray-400">
-            <span className="text-green-400 font-medium">+{parseFloat(formatEther(balanceState.yieldBalance)).toFixed(3)} ETH yield</span>
+          {/* APY Section */}
+          <div className="border-t border-white/10 pt-3 mt-3">
+            <p className="text-sm font-medium text-gray-400 mb-1">Current APY</p>
+            <p className="text-xl font-bold text-gradient-purple">
+              {(() => {
+                if (balanceState.principalBalance === 0n) return "0.00%";
+                const principal = parseFloat(formatEther(balanceState.principalBalance));
+                const yieldAmount = parseFloat(formatEther(balanceState.yieldBalance));
+                if (principal === 0) return "0.00%";
+                
+                // Simple APY calculation (this is a rough estimate)
+                // In a real implementation, you'd want to track time and calculate proper APY
+                const apy = (yieldAmount / principal) * 100;
+                return `${apy.toFixed(2)}%`;
+              })()}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Annual Percentage Yield
+            </p>
           </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Principal + Earned Yield
-          </p>
-        </div>
-
-        {/* APY Panel */}
-        <div className="strategy-card glass-effect p-6">
-          <div className="strategy-icon icon-bg-purple mx-auto mb-4">
-            <i className="fas fa-percentage icon-text-purple text-2xl"></i>
-          </div>
-          <p className="text-lg font-medium text-gray-400 mb-2">Current APY</p>
-          <p className="text-3xl font-bold text-gradient-purple mb-2">
-            {(() => {
-              if (balanceState.principalBalance === 0n) return "0.00%";
-              const principal = parseFloat(formatEther(balanceState.principalBalance));
-              const yieldAmount = parseFloat(formatEther(balanceState.yieldBalance));
-              if (principal === 0) return "0.00%";
-              
-              // Simple APY calculation (this is a rough estimate)
-              // In a real implementation, you'd want to track time and calculate proper APY
-              const apy = (yieldAmount / principal) * 100;
-              return `${apy.toFixed(2)}%`;
-            })()}
-          </p>
-          <div className="text-sm text-gray-500">
-            <span className="text-purple-400">Live yield rate</span>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Annual Percentage Yield
-          </p>
         </div>
       </div>
     </div>
