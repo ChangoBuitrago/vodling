@@ -49,8 +49,8 @@ const BalanceCard: React.FC = () => {
   return (
     <div ref={fadeInRef} className="glass-effect p-6">
       <div className="flex items-center mb-6">
-        <div className="strategy-icon icon-bg-vodl">
-          <i className="fas fa-chart-line icon-text-vodl text-xl"></i>
+        <div className="strategy-icon icon-bg-purple">
+          <i className="fas fa-piggy-bank icon-text-purple text-xl"></i>
         </div>
         <h3 className="text-xl font-bold text-white ml-4 flex items-center">
           Your Portfolio
@@ -61,14 +61,6 @@ const BalanceCard: React.FC = () => {
             </span>
           )}
         </h3>
-        <button
-          onClick={refreshBalance}
-          disabled={isRefreshing}
-          className="ml-auto p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-          title="Refresh balances"
-        >
-          <i className={`fas fa-sync-alt ${isRefreshing ? 'animate-spin' : ''}`}></i>
-        </button>
       </div>
       
       <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -92,7 +84,7 @@ const BalanceCard: React.FC = () => {
             <i className="fas fa-seedling icon-text-green text-2xl"></i>
           </div>
           <p className="text-lg font-medium text-gray-400 mb-2">Yield Earned</p>
-          <p className="text-3xl font-bold text-gradient-green">
+          <p className="text-3xl font-bold text-gradient-vodl">
             {parseFloat(formatEther(balanceState.yieldBalance)).toFixed(4)} ETH
           </p>
           <p className="text-sm text-gray-500 mt-2">
@@ -102,18 +94,18 @@ const BalanceCard: React.FC = () => {
 
         {/* Total Balance + APY Combined */}
         <div className="strategy-card glass-effect p-6">
-          <div className="strategy-icon icon-bg-vodl mx-auto mb-4">
-            <i className="fas fa-chart-line icon-text-vodl text-2xl"></i>
+          <div className="strategy-icon icon-bg-indigo mx-auto mb-4">
+            <i className="fas fa-chart-line icon-text-indigo text-2xl"></i>
           </div>
           <p className="text-lg font-medium text-gray-400 mb-2">Total Balance</p>
-          <p className="text-3xl font-bold text-gradient-vodl mb-2">
+          <p className="text-3xl font-bold text-gradient-purple mb-2">
             {parseFloat(formatEther(balanceState.totalBalance)).toFixed(4)} ETH
           </p>
           
           {/* APY Section */}
           <div className="border-t border-white/10 pt-3 mt-3">
             <p className="text-sm font-medium text-gray-400 mb-1">Current APY</p>
-            <p className="text-xl font-bold text-gradient-purple">
+            <p className="text-xl font-bold text-gradient-indigo">
               {(() => {
                 if (balanceState.principalBalance === 0n) return "0.00%";
                 const principal = parseFloat(formatEther(balanceState.principalBalance));
