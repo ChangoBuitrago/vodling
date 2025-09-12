@@ -198,7 +198,7 @@ const DepositForm: React.FC = () => {
           {walletBalance && (
             <div className="mt-3">
               <p className="text-sm text-gray-400">
-                Wallet balance: <span className="text-green-400 font-medium">
+                Available for deposit: <span className="text-green-400 font-medium">
                   {parseFloat(formatEther(walletBalance.value)).toFixed(4)} ETH
                 </span>
               </p>

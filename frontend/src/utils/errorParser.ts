@@ -70,6 +70,62 @@ export function parseTransactionError(error: any, transactionType: 'deposit' | '
     };
   }
 
+  // Handle "with reason:" pattern errors
+  if (errorMessage.toLowerCase().includes('with reason:')) {
+    // Try to extract the reason after "with reason:"
+    const reasonMatch = errorMessage.match(/with reason:\s*(.+)/i);
+    if (reasonMatch) {
+      const reason = reasonMatch[1].trim();
+      
+      // Check if it's a gas-related error
+      if (reason.toLowerCase().includes('not enough for gas') ||
+          reason.toLowerCase().includes('insufficient gas') ||
+          reason.toLowerCase().includes('gas too low') ||
+          reason.toLowerCase().includes('out of gas')) {
+        return {
+          message: 'Insufficient ETH for gas fees. You need more ETH to cover the transaction costs. Please add more ETH to your wallet or try a smaller amount.',
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      // Check if it's an insufficient funds error
+      if (reason.toLowerCase().includes('insufficient')) {
+        const action = transactionType === 'deposit' ? 'deposit' : 'withdraw';
+        return {
+          message: `Insufficient balance to ${action}. Please check your balance and try a smaller amount.`,
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      // If it's a custom error or hex code, show generic message
+      if (reason.includes('custom error') || reason.includes('0x')) {
+        return {
+          message: 'Transaction failed. The contract rejected the transaction. Please check your inputs and try again.',
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      // If it's a readable reason, show it
+      if (reason.length < 100 && !reason.includes('0x')) {
+        return {
+          message: `Transaction failed: ${reason}`,
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+    }
+    
+    // Fallback for "with reason:" without extractable reason
+    return {
+      message: 'Transaction failed. The contract rejected the transaction. Please check your inputs and try again.',
+      isUserCancellation: false,
+      shouldShowError: true
+    };
+  }
+
   // Contract-specific errors
   if (errorMessage.toLowerCase().includes('execution reverted') ||
       errorMessage.toLowerCase().includes('revert')) {
@@ -77,12 +133,64 @@ export function parseTransactionError(error: any, transactionType: 'deposit' | '
     const revertMatch = errorMessage.match(/revert(?:ed)?\s*:?\s*(.+)/i);
     if (revertMatch) {
       const revertReason = revertMatch[1];
-      return {
-        message: `Transaction failed: ${revertReason}`,
-        isUserCancellation: false,
-        shouldShowError: true
-      };
+      
+      // Handle custom error codes and technical messages
+      if (revertReason.includes('custom error') || revertReason.includes('0x')) {
+        return {
+          message: 'Transaction failed. The contract rejected the transaction. Please check your inputs and try again.',
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      // Handle specific known error messages
+      if (revertReason.toLowerCase().includes('insufficient')) {
+        const action = transactionType === 'deposit' ? 'deposit' : 'withdraw';
+        return {
+          message: `Insufficient balance to ${action}. Please check your balance and try a smaller amount.`,
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      // Handle gas-related errors
+      if (revertReason.toLowerCase().includes('not enough for gas') ||
+          revertReason.toLowerCase().includes('insufficient gas') ||
+          revertReason.toLowerCase().includes('gas too low') ||
+          revertReason.toLowerCase().includes('out of gas')) {
+        return {
+          message: 'Insufficient ETH for gas fees. You need more ETH to cover the transaction costs. Please add more ETH to your wallet or try a smaller amount.',
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      if (revertReason.toLowerCase().includes('unauthorized') || revertReason.toLowerCase().includes('not authorized')) {
+        return {
+          message: 'Transaction not authorized. Please check your permissions and try again.',
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      if (revertReason.toLowerCase().includes('paused')) {
+        return {
+          message: 'This feature is currently paused. Please try again later.',
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
+      
+      // For other revert reasons, show them if they're user-friendly
+      if (revertReason.length < 100 && !revertReason.includes('0x')) {
+        return {
+          message: `Transaction failed: ${revertReason}`,
+          isUserCancellation: false,
+          shouldShowError: true
+        };
+      }
     }
+    
     return {
       message: 'Transaction failed. The contract rejected the transaction. Please check your inputs and try again.',
       isUserCancellation: false,
