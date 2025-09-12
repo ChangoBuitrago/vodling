@@ -13,7 +13,7 @@ const BalanceCard: React.FC = () => {
   } = useSafeVault();
   
   // Get balance state from Web3Context for immediate updates
-  const { balanceState, refreshBalance, isRefreshing } = useWeb3Context();
+  const { balanceState, isRefreshing } = useWeb3Context();
   
   const fadeInRef = useFadeIn(0.2);
   const staggerRef = useStaggerChildren(0.4);
@@ -88,7 +88,7 @@ const BalanceCard: React.FC = () => {
             {parseFloat(formatEther(balanceState.yieldBalance)).toFixed(4)} ETH
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            Earned from Vodling
+            Earned from Vodling Strategy
           </p>
         </div>
 
