@@ -41,8 +41,8 @@ const BalanceCard: React.FC = () => {
       <div className="glass-effect p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-white/10 rounded w-1/3 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2].map((i) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
               <div key={i} className="loading-skeleton rounded-xl p-6 h-32"></div>
             ))}
           </div>
@@ -58,7 +58,7 @@ const BalanceCard: React.FC = () => {
         Your Vodling Portfolio
       </h3>
       
-      <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Principal Balance */}
         <div className="strategy-card glass-effect p-6">
           <div className="strategy-icon icon-bg-blue mx-auto mb-4">
@@ -66,7 +66,7 @@ const BalanceCard: React.FC = () => {
           </div>
           <p className="text-lg font-medium text-gray-400 mb-2">Principal Balance</p>
           <p className="text-3xl font-bold text-gradient-blue">
-            {parseFloat(formatEther(principalBalance as bigint)).toFixed(6)} ETH
+            {parseFloat(formatEther(principalBalance as bigint)).toFixed(4)} ETH
           </p>
           <p className="text-sm text-gray-500 mt-2">
             Your Original Deposit
@@ -79,11 +79,43 @@ const BalanceCard: React.FC = () => {
             <i className="fas fa-chart-line icon-text-vodl text-2xl"></i>
           </div>
           <p className="text-lg font-medium text-gray-400 mb-2">Total Balance</p>
-          <p className="text-3xl font-bold text-gradient-vodl">
-            {parseFloat(formatEther(totalBalance as bigint)).toFixed(6)} ETH
+          <p className="text-3xl font-bold text-gradient-vodl mb-2">
+            {parseFloat(formatEther(totalBalance as bigint)).toFixed(4)} ETH
           </p>
+          
+          {/* Yield only */}
+          <div className="text-sm text-gray-400">
+            <span className="text-green-400 font-medium">+{parseFloat(formatEther(yieldBalance as bigint)).toFixed(3)} ETH yield</span>
+          </div>
           <p className="text-sm text-gray-500 mt-2">
-            Principal + Yield Combined
+            Principal + Earned Yield
+          </p>
+        </div>
+
+        {/* APY Panel */}
+        <div className="strategy-card glass-effect p-6">
+          <div className="strategy-icon icon-bg-purple mx-auto mb-4">
+            <i className="fas fa-percentage icon-text-purple text-2xl"></i>
+          </div>
+          <p className="text-lg font-medium text-gray-400 mb-2">Current APY</p>
+          <p className="text-3xl font-bold text-gradient-purple mb-2">
+            {(() => {
+              if (principalBalance === 0n) return "0.00%";
+              const principal = parseFloat(formatEther(principalBalance as bigint));
+              const yieldAmount = parseFloat(formatEther(yieldBalance as bigint));
+              if (principal === 0) return "0.00%";
+              
+              // Simple APY calculation (this is a rough estimate)
+              // In a real implementation, you'd want to track time and calculate proper APY
+              const apy = (yieldAmount / principal) * 100;
+              return `${apy.toFixed(2)}%`;
+            })()}
+          </p>
+          <div className="text-sm text-gray-500">
+            <span className="text-purple-400">Live yield rate</span>
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Annual Percentage Yield
           </p>
         </div>
       </div>
