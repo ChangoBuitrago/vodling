@@ -447,7 +447,8 @@ export const useSafeVault = () => {
       const isUserCancellation = errorMessage.includes('user rejected') || 
                                 errorMessage.includes('User denied') ||
                                 errorMessage.includes('cancelled') ||
-                                errorMessage.includes('rejected');
+                                errorMessage.includes('rejected') ||
+                                errorMessage.includes('denied transaction signature');
       
       if (!isUserCancellation) {
         // Set user-friendly error message only for non-cancellation errors
@@ -502,7 +503,8 @@ export const useSafeVault = () => {
       const isUserCancellation = errorMessage.includes('user rejected') || 
                                 errorMessage.includes('User denied') ||
                                 errorMessage.includes('cancelled') ||
-                                errorMessage.includes('rejected');
+                                errorMessage.includes('rejected') ||
+                                errorMessage.includes('denied transaction signature');
       
       if (!isUserCancellation) {
         // Set user-friendly error message only for non-cancellation errors

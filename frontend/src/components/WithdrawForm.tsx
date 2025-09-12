@@ -52,8 +52,11 @@ const WithdrawForm: React.FC = () => {
       
       if (err.message && err.message.includes('insufficient funds')) {
         userMessage = 'Insufficient funds. Please check your wallet balance and try a smaller amount.';
-      } else if (err.message && err.message.includes('user rejected')) {
-        userMessage = 'Transaction was cancelled by user.';
+      } else if (err.message && (err.message.includes('user rejected') || err.message.includes('User denied') || err.message.includes('cancelled') || err.message.includes('denied transaction signature')) || err.code === 4001) {
+        // Don't show error message for user cancellations - just reset the form
+        console.log('🚫 User cancelled transaction - resetting form');
+        setError('');
+        return;
       } else if (err.message && err.message.includes('network')) {
         userMessage = 'Network error. Please check your connection and try again.';
       } else if (err.message) {
@@ -86,6 +89,15 @@ const WithdrawForm: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isWithdrawTotalSuccess, refreshBalance]);
+
+  // Handle loading state changes to reset form if loading stops unexpectedly
+  React.useEffect(() => {
+    // If loading state changes from true to false and we're not in success state, reset any errors
+    if (!isWithdrawTotalLoading && !isWithdrawTotalSuccess && error) {
+      console.log('🔄 WithdrawForm: Loading state changed, clearing any pending errors');
+      setError('');
+    }
+  }, [isWithdrawTotalLoading, isWithdrawTotalSuccess, error]);
 
   if (!isConnected) {
     return null;
