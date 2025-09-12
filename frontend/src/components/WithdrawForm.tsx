@@ -31,10 +31,31 @@ const WithdrawForm: React.FC = () => {
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [maxAmountWei, setMaxAmountWei] = useState<bigint | null>(null);
+  const [availableAmountWei, setAvailableAmountWei] = useState<bigint | null>(null);
   
   
   const fadeInRef = useFadeIn(0.4);
   const glowRef = useGlowEffect('#8B5CF6');
+
+  // Calculate available amount when withdrawable balance changes
+  React.useEffect(() => {
+    const calculateAvailableAmount = async () => {
+      if (!actualWithdrawableBalance) {
+        setAvailableAmountWei(null);
+        return;
+      }
+
+      try {
+        const availableAmount = await calculateMaxWithdrawAmount(actualWithdrawableBalance as bigint);
+        setAvailableAmountWei(availableAmount);
+      } catch (error) {
+        console.error('Failed to calculate available amount:', error);
+        setAvailableAmountWei(null);
+      }
+    };
+
+    calculateAvailableAmount();
+  }, [actualWithdrawableBalance, calculateMaxWithdrawAmount]);
 
   const handleWithdraw = async () => {
     if (!amount) {
@@ -115,37 +136,23 @@ const WithdrawForm: React.FC = () => {
   };
 
   const handleMaxClick = async () => {
-    const actualBalanceWei = actualWithdrawableBalance as bigint;
-    
-    if (!actualBalanceWei || actualBalanceWei === 0n) {
+    if (!availableAmountWei || availableAmountWei === 0n) {
       setError('No balance available for withdrawal');
       return;
     }
 
     try {
-      console.log('🔍 MAX Button - Calculating optimal withdrawal amount...');
-      console.log(`  - Total balance: ${formatEther(totalBalance as bigint)} ETH`);
-      console.log(`  - Actual withdrawable: ${formatEther(actualBalanceWei)} ETH`);
+      console.log('🔍 MAX Button - Using calculated available amount...');
+      console.log(`  - Available amount: ${formatEther(availableAmountWei)} ETH`);
       
-      // Use the new gas estimation to calculate the exact maximum amount
-      const maxWithdrawAmount = await calculateMaxWithdrawAmount(actualBalanceWei);
-      
-      console.log(`  - Max withdraw amount (full balance): ${formatEther(maxWithdrawAmount)} ETH`);
-      
-      if (maxWithdrawAmount > 0n) {
-        // Store the exact BigInt value to avoid floating-point precision issues
-        setMaxAmountWei(maxWithdrawAmount);
-        setAmount(formatEtherDisplay(maxWithdrawAmount));
-        setError(''); // Clear any previous errors
-      } else {
-        setMaxAmountWei(null);
-        setAmount('');
-        setError('No funds available for withdrawal.');
-      }
+      // Use the pre-calculated available amount
+      setMaxAmountWei(availableAmountWei);
+      setAmount(formatEtherDisplay(availableAmountWei));
+      setError(''); // Clear any previous errors
     } catch (error: any) {
-      console.error('❌ Error calculating max withdraw amount:', error);
+      console.error('❌ Error setting max amount:', error);
       setMaxAmountWei(null);
-      setError('Failed to calculate maximum withdrawal amount. Please try a smaller amount.');
+      setError('Failed to set maximum amount. Please try again.');
     }
   };
 
@@ -290,30 +297,9 @@ const WithdrawForm: React.FC = () => {
           {/* Balance Display */}
           <div className="mt-3">
             <p className="text-sm text-gray-400">
-              Available for withdrawal: <span className="text-green-400 font-medium">{(() => {
-                const actualBalanceWei = actualWithdrawableBalance as bigint;
-                const baseBuffer = parseEther('0.15');
-                const largeTransactionSize = parseEther('1000');
-                const veryLargeTransactionSize = parseEther('5000');
-                const extremelyLargeTransactionSize = parseEther('8000');
-                let bufferAmount = baseBuffer;
-                if (actualBalanceWei > extremelyLargeTransactionSize) {
-                  const percentageBuffer = actualBalanceWei / 50n;
-                  const minBuffer = parseEther('2');
-                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                } else if (actualBalanceWei > veryLargeTransactionSize) {
-                  const percentageBuffer = actualBalanceWei / 100n;
-                  const minBuffer = parseEther('1');
-                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                } else if (actualBalanceWei > largeTransactionSize) {
-                  const percentageBuffer = actualBalanceWei / 200n;
-                  const minBuffer = parseEther('0.5');
-                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                }
-                // Use BigInt math and convert to number only at the end to avoid precision errors
-                const displayAmount = actualBalanceWei - bufferAmount;
-                return Number(formatEther(displayAmount)).toFixed(6);
-              })()} ETH</span>
+              Available for withdrawal: <span className="text-green-400 font-medium">
+                {availableAmountWei ? formatEtherDisplay(availableAmountWei) : 'Calculating...'}
+              </span> ETH
             </p>
             {/* Gas estimation display removed due to viem compatibility issues */}
           </div>
