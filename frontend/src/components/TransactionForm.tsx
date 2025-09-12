@@ -260,73 +260,51 @@ const TransactionForm: React.FC = () => {
         <div>
           <h4 className="text-lg font-semibold text-white mb-2">1. Choose Action</h4>
           <p className="helper-text text-gray-400 text-sm mb-4">
-            Select whether you want to deposit ETH into your vault or withdraw from your vault to your wallet.
+            Choose to deposit or withdraw ETH.
           </p>
         </div>
 
         {/* Action Selection Buttons */}
         <div className="grid grid-cols-2 gap-4">
           {/* Deposit Button */}
-          <div className="space-y-3">
-            <button
-              onClick={() => setSelectedAction('deposit')}
-              className="py-4 text-lg font-semibold w-full"
-              style={{
-                background: selectedAction === 'deposit' 
-                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.9))'
-                  : 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-                border: `1px solid ${selectedAction === 'deposit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)'}`,
-                boxShadow: 'none',
-                borderRadius: '12px',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              <span className="flex items-center justify-center">
-                <i className="fas fa-arrow-up mr-2"></i>
-                Deposit
-              </span>
-            </button>
-            
-            {/* Wallet Balance under Deposit Button */}
-            <div className="balance-minimal">
-              <span className="text-xs text-gray-400">
-                Available for deposit: <span className="text-green-400 font-medium">
-                  {walletBalance ? `${parseFloat(formatEther(walletBalance.value)).toFixed(4)} ETH` : '0.0000 ETH'}
-                </span>
-              </span>
-            </div>
-          </div>
+          <button
+            onClick={() => setSelectedAction('deposit')}
+            className="py-4 text-lg font-semibold w-full strategy-card"
+            style={{
+              background: selectedAction === 'deposit' 
+                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.9))'
+                : 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+              border: `1px solid ${selectedAction === 'deposit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)'}`,
+              boxShadow: 'none',
+              borderRadius: '12px',
+              transition: 'all 0.4s ease',
+            }}
+          >
+            <span className="flex items-center justify-center">
+              <i className="fas fa-arrow-up mr-2"></i>
+              Deposit
+            </span>
+          </button>
 
           {/* Withdraw Button */}
-          <div className="space-y-3">
-            <button
-              onClick={() => setSelectedAction('withdraw')}
-              className="py-4 text-lg font-semibold w-full"
-              style={{
-                background: selectedAction === 'withdraw' 
-                  ? 'linear-gradient(135deg, rgba(168, 139, 250, 0.8), rgba(139, 92, 246, 0.9))'
-                  : 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-                border: `1px solid ${selectedAction === 'withdraw' ? 'rgba(168, 139, 250, 0.3)' : 'rgba(255,255,255,0.1)'}`,
-                boxShadow: 'none',
-                borderRadius: '12px',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              <span className="flex items-center justify-center">
-                <i className="fas fa-arrow-down mr-2"></i>
-                Withdraw
-              </span>
-            </button>
-            
-            {/* Vault Balance under Withdraw Button */}
-            <div className="balance-minimal">
-              <span className="text-xs text-gray-400">
-                Available for withdrawal: <span className="text-green-400 font-medium">
-                  {actualWithdrawableBalance ? `${parseFloat(formatEther(actualWithdrawableBalance as bigint)).toFixed(4)} ETH` : '0.0000 ETH'}
-                </span>
-              </span>
-            </div>
-          </div>
+          <button
+            onClick={() => setSelectedAction('withdraw')}
+            className="py-4 text-lg font-semibold w-full strategy-card"
+            style={{
+              background: selectedAction === 'withdraw' 
+                ? 'linear-gradient(135deg, rgba(168, 139, 250, 0.8), rgba(139, 92, 246, 0.9))'
+                : 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+              border: `1px solid ${selectedAction === 'withdraw' ? 'rgba(168, 139, 250, 0.3)' : 'rgba(255,255,255,0.1)'}`,
+              boxShadow: 'none',
+              borderRadius: '12px',
+              transition: 'all 0.4s ease',
+            }}
+          >
+            <span className="flex items-center justify-center">
+              <i className="fas fa-arrow-down mr-2"></i>
+              Withdraw
+            </span>
+          </button>
         </div>
 
         {/* Error Display */}
@@ -344,6 +322,7 @@ const TransactionForm: React.FC = () => {
             <p className="helper-text text-gray-400 text-sm mb-4">
               Enter the amount of ETH you'd like to {selectedAction}.
             </p>
+            
             <label htmlFor="transaction-amount" className="block text-sm font-medium text-gray-300 mb-3">
               Amount (ETH)
             </label>
@@ -369,6 +348,21 @@ const TransactionForm: React.FC = () => {
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                 <span className="text-gray-400 text-sm">ETH</span>
+              </div>
+            </div>
+            
+            {/* Available Balance Information - below input */}
+            <div className="mt-3">
+              <div className="balance-minimal">
+                <span className="text-xs text-gray-400">
+                  {selectedAction === 'deposit' ? 'Available for deposit:' : 'Available for withdrawal:'} 
+                  <span className="text-green-400 font-medium">
+                    {selectedAction === 'deposit' 
+                      ? walletBalance ? ` ${parseFloat(formatEther(walletBalance.value)).toFixed(4)} ETH` : ' 0.0000 ETH'
+                      : actualWithdrawableBalance ? ` ${parseFloat(formatEther(actualWithdrawableBalance as bigint)).toFixed(4)} ETH` : ' 0.0000 ETH'
+                    }
+                  </span>
+                </span>
               </div>
             </div>
           </div>
