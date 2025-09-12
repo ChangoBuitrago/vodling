@@ -3,6 +3,7 @@ import { useContract } from './useContract';
 import { useWeb3Context } from '../contexts/Web3Context';
 import { parseEther, formatEther } from 'ethers';
 import { useState, useEffect, useCallback } from 'react';
+import { handleTransactionError } from '../utils/errorParser';
 
 export const useSafeVault = () => {
   const { address } = useAccount();
@@ -554,11 +555,10 @@ export const useSafeVault = () => {
       });
       
       if (!isUserCancellation) {
-        // Set user-friendly error message only for non-cancellation errors
-        if (errorMessage.includes('custom error') || errorMessage.includes('execution reverted')) {
-          setTransactionError('Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try depositing a smaller amount.');
-        } else {
-          setTransactionError(`Transaction failed: ${errorMessage}`);
+        // Use the error parser for consistent user-friendly messages
+        const parsedError = handleTransactionError({ message: errorMessage }, 'deposit');
+        if (parsedError.shouldShowError) {
+          setTransactionError(parsedError.message);
         }
       } else {
         console.log('🚫 User cancelled deposit transaction - not showing error message and resetting state');
@@ -623,11 +623,10 @@ export const useSafeVault = () => {
       });
       
       if (!isUserCancellation) {
-        // Set user-friendly error message only for non-cancellation errors
-        if (errorMessage.includes('custom error') || errorMessage.includes('execution reverted')) {
-          setTransactionError('Transaction failed due to a smart contract error. This might be due to insufficient balance in the vault or a contract restriction. Try withdrawing a smaller amount.');
-        } else {
-          setTransactionError(`Transaction failed: ${errorMessage}`);
+        // Use the error parser for consistent user-friendly messages
+        const parsedError = handleTransactionError({ message: errorMessage }, 'withdraw');
+        if (parsedError.shouldShowError) {
+          setTransactionError(parsedError.message);
         }
       } else {
         console.log('🚫 User cancelled withdrawal transaction - not showing error message and resetting state');

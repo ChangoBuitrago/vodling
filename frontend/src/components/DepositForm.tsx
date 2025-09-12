@@ -4,6 +4,7 @@ import { useSafeVault } from '../hooks/useSafeVault';
 import { parseEther, formatEther } from 'ethers';
 import TransactionLoader from './TransactionLoader';
 import { useFadeIn, useGlowEffect } from '../hooks/useAnimations';
+import { handleTransactionError } from '../utils/errorParser';
 
 const DepositForm: React.FC = () => {
   const { isConnected, address } = useAccount();
@@ -63,26 +64,19 @@ const DepositForm: React.FC = () => {
       
       setAmount('');
     } catch (err: any) {
-      console.error('Deposit error:', err);
+      const parsedError = handleTransactionError(err, 'deposit');
       
-      // Handle specific errors with better messaging
-      let userMessage = 'Deposit failed. Please try again.';
-      
-      if (err.message && err.message.includes('insufficient funds')) {
-        userMessage = 'Insufficient funds. Please check your wallet balance and try a smaller amount.';
-      } else if (err.code === 4001 || (err.message && (err.message.includes('user rejected') || err.message.includes('User denied') || err.message.includes('cancelled') || err.message.includes('denied transaction signature')))) {
+      if (parsedError.isUserCancellation) {
         // Don't show error message for user cancellations - just reset the form
         console.log('🚫 User cancelled deposit transaction - resetting form');
         setError('');
         setAmount(''); // Clear the amount field
         return;
-      } else if (err.message && err.message.includes('network')) {
-        userMessage = 'Network error. Please check your connection and try again.';
-      } else if (err.message) {
-        userMessage = `Transaction failed: ${err.message}`;
       }
       
-      setError(userMessage);
+      if (parsedError.shouldShowError) {
+        setError(parsedError.message);
+      }
     }
   };
 
