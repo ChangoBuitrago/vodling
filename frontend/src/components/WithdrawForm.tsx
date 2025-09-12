@@ -187,6 +187,10 @@ const WithdrawForm: React.FC = () => {
               }}
               placeholder="0.0"
               inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
               className="form-input w-full px-4 py-3 pr-16 text-lg"
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -198,7 +202,7 @@ const WithdrawForm: React.FC = () => {
           <div className="mt-3">
             <p className="text-sm text-gray-400">
               Available for withdrawal: <span className="text-green-400 font-medium">
-                {actualWithdrawableBalance ? formatEther(actualWithdrawableBalance as bigint) : '0'} ETH
+                {actualWithdrawableBalance ? parseFloat(formatEther(actualWithdrawableBalance as bigint)).toFixed(4) : '0.0000'} ETH
               </span>
             </p>
           </div>

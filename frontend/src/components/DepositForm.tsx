@@ -189,6 +189,10 @@ const DepositForm: React.FC = () => {
               }}
               placeholder="0.0"
               inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
               className="form-input w-full px-4 py-3 pr-16 text-lg"
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -201,7 +205,7 @@ const DepositForm: React.FC = () => {
             <div className="mt-3">
               <p className="text-sm text-gray-400">
                 Wallet balance: <span className="text-green-400 font-medium">
-                  {formatEther(walletBalance.value)} ETH
+                  {parseFloat(formatEther(walletBalance.value)).toFixed(4)} ETH
                 </span>
               </p>
             </div>
@@ -237,27 +241,6 @@ const DepositForm: React.FC = () => {
           </button>
         </form>
 
-        {/* Info Panel */}
-        <div className="glass-effect p-4 border border-vodl-500/20">
-          <h4 className="text-sm font-medium text-vodl-400 mb-3 flex items-center">
-            <i className="fas fa-info-circle mr-2"></i>
-            How Vodling Works:
-          </h4>
-          <ul className="text-sm text-gray-300 space-y-2">
-            <li className="flex items-start">
-              <i className="fas fa-shield-alt text-vodl-400 mr-2 mt-0.5 text-xs"></i>
-              Your ETH is staked via Lido to earn stETH yield
-            </li>
-            <li className="flex items-start">
-              <i className="fas fa-lock text-vodl-400 mr-2 mt-0.5 text-xs"></i>
-              Your principal is always protected and never sold
-            </li>
-            <li className="flex items-start">
-              <i className="fas fa-chart-line text-vodl-400 mr-2 mt-0.5 text-xs"></i>
-              Yield accumulates over time and can be withdrawn separately
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );

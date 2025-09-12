@@ -233,16 +233,49 @@ body {
   border-radius: 12px;
   color: #E5E7EB;
   transition: all 0.3s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .form-input:focus {
   outline: none;
   border-color: rgba(99, 102, 241, 0.5);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .form-input::placeholder {
   color: #9CA3AF;
+}
+
+/* Prevent browser autofill styling from overriding dark theme */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.05) inset !important;
+  -webkit-text-fill-color: #E5E7EB !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Remove input validation callouts and ensure consistent styling */
+.form-input:invalid {
+  box-shadow: none;
+}
+
+/* Ensure consistent styling across browsers */
+input[type="text"].form-input {
+  background: rgba(255, 255, 255, 0.05);
+  color: #E5E7EB;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+input[type="text"].form-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  color: #E5E7EB;
+  border-color: rgba(99, 102, 241, 0.5);
 }
 
 /* Scrollbar styling */
