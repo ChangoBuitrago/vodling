@@ -1,18 +1,20 @@
 import React from 'react';
 import { useAccount } from 'wagmi';
 import { useSafeVault } from '../hooks/useSafeVault';
+import { useWeb3Context } from '../contexts/Web3Context';
 import { formatEther } from 'ethers';
 import { useFadeIn, useStaggerChildren } from '../hooks/useAnimations';
 
 const BalanceCard: React.FC = () => {
   const { isConnected } = useAccount();
   const { 
-    principalBalance, 
-    yieldBalance, 
-    totalBalance, 
     isLoading,
-    isWithdrawTotalLoading
+    isWithdrawTotalLoading,
+    isRefreshing
   } = useSafeVault();
+  
+  // Get balance state from Web3Context for immediate updates
+  const { balanceState } = useWeb3Context();
   
   const fadeInRef = useFadeIn(0.2);
   const staggerRef = useStaggerChildren(0.4);
@@ -30,7 +32,7 @@ const BalanceCard: React.FC = () => {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || balanceState.isLoading) {
     return (
       <div className="glass-effect p-6">
         <div className="animate-pulse">
@@ -50,7 +52,7 @@ const BalanceCard: React.FC = () => {
       <h3 className="text-xl font-bold text-white mb-6 flex items-center">
         <i className="fas fa-chart-line text-gradient-vodl mr-3"></i>
         Your Vodling Portfolio
-        {isWithdrawTotalLoading && (
+        {(isWithdrawTotalLoading || isRefreshing) && (
           <span className="ml-2 text-sm text-gray-400 flex items-center">
             <i className="fas fa-sync-alt animate-spin mr-1"></i>
             Updating...
@@ -66,7 +68,7 @@ const BalanceCard: React.FC = () => {
           </div>
           <p className="text-lg font-medium text-gray-400 mb-2">Principal Balance</p>
           <p className="text-3xl font-bold text-gradient-blue">
-            {parseFloat(formatEther(principalBalance as bigint)).toFixed(4)} ETH
+            {parseFloat(formatEther(balanceState.principalBalance)).toFixed(4)} ETH
           </p>
           <p className="text-sm text-gray-500 mt-2">
             Your Original Deposit
@@ -80,12 +82,12 @@ const BalanceCard: React.FC = () => {
           </div>
           <p className="text-lg font-medium text-gray-400 mb-2">Total Balance</p>
           <p className="text-3xl font-bold text-gradient-vodl mb-2">
-            {parseFloat(formatEther(totalBalance as bigint)).toFixed(4)} ETH
+            {parseFloat(formatEther(balanceState.totalBalance)).toFixed(4)} ETH
           </p>
           
           {/* Yield only */}
           <div className="text-sm text-gray-400">
-            <span className="text-green-400 font-medium">+{parseFloat(formatEther(yieldBalance as bigint)).toFixed(3)} ETH yield</span>
+            <span className="text-green-400 font-medium">+{parseFloat(formatEther(balanceState.yieldBalance)).toFixed(3)} ETH yield</span>
           </div>
           <p className="text-sm text-gray-500 mt-2">
             Principal + Earned Yield
@@ -100,9 +102,9 @@ const BalanceCard: React.FC = () => {
           <p className="text-lg font-medium text-gray-400 mb-2">Current APY</p>
           <p className="text-3xl font-bold text-gradient-purple mb-2">
             {(() => {
-              if (principalBalance === 0n) return "0.00%";
-              const principal = parseFloat(formatEther(principalBalance as bigint));
-              const yieldAmount = parseFloat(formatEther(yieldBalance as bigint));
+              if (balanceState.principalBalance === 0n) return "0.00%";
+              const principal = parseFloat(formatEther(balanceState.principalBalance));
+              const yieldAmount = parseFloat(formatEther(balanceState.yieldBalance));
               if (principal === 0) return "0.00%";
               
               // Simple APY calculation (this is a rough estimate)

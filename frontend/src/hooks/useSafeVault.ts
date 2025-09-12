@@ -1,56 +1,26 @@
 import { useAccount, useContractRead, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useContract } from './useContract';
+import { useWeb3Context } from '../contexts/Web3Context';
 import { parseEther, formatEther } from 'ethers';
 import { useState, useEffect, useCallback } from 'react';
 
 export const useSafeVault = () => {
   const { address } = useAccount();
   const { safeVaultContract, mockLidoContract } = useContract();
+  const { balanceState, refreshBalance, isRefreshing } = useWeb3Context();
   
   // Loading states
   const [isDepositPending, setIsDepositPending] = useState(false);
   const [isWithdrawTotalPending, setIsWithdrawTotalPending] = useState(false);
 
-  // Read functions with refetch capabilities
-  const { data: principalBalance = 0n, refetch: refetchPrincipalBalance } = useContractRead({
-    address: safeVaultContract?.address as `0x${string}` | undefined,
-    abi: safeVaultContract?.abi,
-    functionName: 'getUserPrincipal',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address,
-      refetchInterval: false, // Disable automatic refetch
-      staleTime: 0, // Always consider data stale
-    },
-  });
-
-  const { data: yieldBalance = 0n, refetch: refetchYieldBalance } = useContractRead({
-    address: safeVaultContract?.address as `0x${string}` | undefined,
-    abi: safeVaultContract?.abi,
-    functionName: 'getUserYield',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address,
-      refetchInterval: false, // Disable automatic refetch
-      staleTime: 0, // Always consider data stale
-    },
-  });
-
-  // Calculate total balance as principal + yield (since getUserTotalBalance doesn't exist in contract)
-  const totalBalance = (principalBalance as bigint) + (yieldBalance as bigint);
-
-  // Get the actual withdrawable balance from the contract (same calculation as withdrawTotal uses)
-  const { data: actualWithdrawableBalance = 0n, refetch: refetchActualBalance } = useContractRead({
-    address: safeVaultContract?.address as `0x${string}` | undefined,
-    abi: safeVaultContract?.abi,
-    functionName: 'getUserActualWithdrawableBalance',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address,
-      refetchInterval: false,
-      staleTime: 0,
-    },
-  });
+  // Use balance data from Web3Context
+  const { 
+    principalBalance, 
+    yieldBalance, 
+    totalBalance, 
+    actualWithdrawableBalance,
+    isLoading: balanceLoading 
+  } = balanceState;
 
   const { data: totalPrincipal = 0n, refetch: refetchTotalPrincipal } = useContractRead({
     address: safeVaultContract?.address as `0x${string}` | undefined,
@@ -130,61 +100,41 @@ export const useSafeVault = () => {
   // Combined loading states
   const isDepositLoading = isDepositPending || isDepositWriting || isDepositConfirming;
   const isWithdrawTotalLoading = isWithdrawTotalPending || isWithdrawTotalWriting || isWithdrawTotalConfirming;
-  const isLoading = isDepositLoading || isWithdrawTotalLoading;
+  const isLoading = isDepositLoading || isWithdrawTotalLoading || balanceLoading;
 
-  // Function to refetch all data
+  // Function to refetch all data - now uses Web3Context
   const refetchAllData = useCallback(async () => {
     if (!safeVaultContract?.address || !address) {
       console.log('Cannot refetch: missing contract address or user address');
       return;
     }
     
-    console.log('🔄 Refetching all data...');
+    console.log('🔄 Refetching all data via Web3Context...');
     console.log('Contract address:', safeVaultContract.address);
     console.log('User address:', address);
     console.log('Current balances before refetch:');
-    console.log('  - Principal:', formatEther(principalBalance as bigint), 'ETH');
-    console.log('  - Yield:', formatEther(yieldBalance as bigint), 'ETH');
+    console.log('  - Principal:', formatEther(principalBalance), 'ETH');
+    console.log('  - Yield:', formatEther(yieldBalance), 'ETH');
     console.log('  - Total:', formatEther(totalBalance), 'ETH');
     
     try {
+      // Use Web3Context's refreshBalance for user balance data
+      await refreshBalance();
+      
+      // Also refetch global contract data
       const results = await Promise.all([
-        refetchPrincipalBalance(),
-        refetchYieldBalance(),
-        refetchActualBalance(),
         refetchTotalPrincipal(),
         refetchTotalYield(),
       ]);
       
-      console.log('📊 Refetch results:');
-      console.log('  - Principal:', results[0]?.data ? formatEther(results[0].data as bigint) : 'undefined', 'ETH');
-      console.log('  - Yield:', results[1]?.data ? formatEther(results[1].data as bigint) : 'undefined', 'ETH');
-      console.log('  - Total:', results[2]?.data ? formatEther(results[2].data as bigint) : 'undefined', 'ETH');
-      console.log('  - Actual Withdrawable:', results[3]?.data ? formatEther(results[3].data as bigint) : 'undefined', 'ETH');
-      
-      // Check if balances actually changed
-      const newPrincipal = results[0]?.data;
-      const newYield = results[1]?.data;
-      const newTotal = results[2]?.data;
-      
-      if (newPrincipal !== undefined && newPrincipal !== principalBalance) {
-        console.log('✅ Principal balance updated:', formatEther(newPrincipal as bigint), 'ETH');
-      }
-      if (newYield !== undefined && newYield !== yieldBalance) {
-        console.log('✅ Yield balance updated:', formatEther(newYield as bigint), 'ETH');
-      }
-      if (newTotal !== undefined && newTotal !== totalBalance) {
-        console.log('✅ Total balance updated:', formatEther(newTotal as bigint), 'ETH');
-      }
-      
-      if (newPrincipal === principalBalance && newYield === yieldBalance && newTotal === totalBalance) {
-        console.log('⚠️ No balance changes detected - balances may not have updated yet');
-      }
+      console.log('📊 Global contract data refetch results:');
+      console.log('  - Total Principal:', results[0]?.data ? formatEther(results[0].data as bigint) : 'undefined', 'ETH');
+      console.log('  - Total Yield:', results[1]?.data ? formatEther(results[1].data as bigint) : 'undefined', 'ETH');
       
     } catch (error) {
       console.error('❌ Error during refetch:', error);
     }
-  }, [refetchPrincipalBalance, refetchYieldBalance, refetchActualBalance, refetchTotalPrincipal, refetchTotalYield, safeVaultContract?.address, address, principalBalance, yieldBalance, totalBalance]);
+  }, [refreshBalance, refetchTotalPrincipal, refetchTotalYield, safeVaultContract?.address, address, principalBalance, yieldBalance, totalBalance]);
 
   // Manual refetch only - no automatic intervals
 
@@ -345,16 +295,11 @@ export const useSafeVault = () => {
       
       // Get fresh balance data right before transaction
       console.log('🔍 Getting fresh balance data before transaction...');
-      const freshBalanceData = await Promise.all([
-        refetchPrincipalBalance(),
-        refetchYieldBalance(),
-        refetchActualBalance(),
-      ]);
+      await refreshBalance();
       
-      const freshPrincipalBalance = freshBalanceData[0]?.data as bigint;
-      const freshYieldBalance = freshBalanceData[1]?.data as bigint;
-      const freshActualBalance = freshBalanceData[2]?.data as bigint;
-      const freshTotalBalance = (freshPrincipalBalance || 0n) + (freshYieldBalance || 0n);
+      // Use current balance state from Web3Context
+      const freshActualBalance = balanceState.actualWithdrawableBalance;
+      const freshTotalBalance = balanceState.totalBalance;
       
       console.log('🔍 Fresh Balance Data:');
       console.log(`  - Fresh total balance: ${formatEther(freshTotalBalance)} ETH`);
@@ -617,6 +562,7 @@ export const useSafeVault = () => {
     withdrawTotal,
     estimateWithdrawalGas,
     refetchAllData,
+    refreshBalance, // Expose Web3Context's refreshBalance function
     isLoading,
     isDepositLoading,
     isWithdrawTotalLoading,
@@ -632,5 +578,6 @@ export const useSafeVault = () => {
     // gasEstimationError, // Removed due to viem compatibility issues
     transactionError,
     clearTransactionError,
+    isRefreshing, // Expose Web3Context's isRefreshing state
   };
 };

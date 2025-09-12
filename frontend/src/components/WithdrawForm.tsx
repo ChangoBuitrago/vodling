@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { useSafeVault } from '../hooks/useSafeVault';
-import { useGasEstimation } from '../hooks/useGasEstimation';
 import { parseEther, formatEther } from 'ethers';
 import TransactionLoader from './TransactionLoader';
 import { useFadeIn, useGlowEffect } from '../hooks/useAnimations';
-import { formatEtherDisplay } from '../utils/precision';
 
 const WithdrawForm: React.FC = () => {
   const { isConnected } = useAccount();
   const { 
     withdrawTotal, 
-    estimateWithdrawalGas,
-    totalBalance,
     actualWithdrawableBalance, 
     isWithdrawTotalLoading,
     isWithdrawTotalWriting,
@@ -20,42 +16,17 @@ const WithdrawForm: React.FC = () => {
     isWithdrawTotalSuccess,
     withdrawTotalTx,
     transactionError,
-    clearTransactionError
-    // estimatedGasForWithdrawal, // Removed due to viem compatibility issues
-    // gasEstimationError // Removed due to viem compatibility issues
+    clearTransactionError,
+    refreshBalance
   } = useSafeVault();
-  
-  const { calculateMaxWithdrawAmount, isEstimating: isEstimatingGas } = useGasEstimation();
   
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [maxAmountWei, setMaxAmountWei] = useState<bigint | null>(null);
-  const [availableAmountWei, setAvailableAmountWei] = useState<bigint | null>(null);
   
   
   const fadeInRef = useFadeIn(0.4);
   const glowRef = useGlowEffect('#8B5CF6');
-
-  // Calculate available amount when withdrawable balance changes
-  React.useEffect(() => {
-    const calculateAvailableAmount = async () => {
-      if (!actualWithdrawableBalance) {
-        setAvailableAmountWei(null);
-        return;
-      }
-
-      try {
-        const availableAmount = await calculateMaxWithdrawAmount(actualWithdrawableBalance as bigint);
-        setAvailableAmountWei(availableAmount);
-      } catch (error) {
-        console.error('Failed to calculate available amount:', error);
-        setAvailableAmountWei(null);
-      }
-    };
-
-    calculateAvailableAmount();
-  }, [actualWithdrawableBalance, calculateMaxWithdrawAmount]);
 
   const handleWithdraw = async () => {
     if (!amount) {
@@ -64,42 +35,11 @@ const WithdrawForm: React.FC = () => {
     }
 
     try {
-      // Use the stored BigInt value if available (from MAX button), otherwise parse the string
-      let amountWei: bigint;
-      if (maxAmountWei) {
-        amountWei = maxAmountWei;
-      } else {
-        // Normalize decimal separator (comma to period) for parsing
-        const normalizedAmount = amount.replace(',', '.');
-        amountWei = parseEther(normalizedAmount);
-      }
-      const balance = totalBalance as bigint;
+      // Normalize decimal separator (comma to period) for parsing
+      const normalizedAmount = amount.replace(',', '.');
+      const amountWei = parseEther(normalizedAmount);
       
-      console.log('🔍 Withdraw Total Debug:');
-      console.log('  - Input amount:', amount);
-      console.log('  - Parsed amount (wei):', amountWei.toString());
-      console.log('  - Parsed amount (ETH):', formatEther(amountWei));
-      console.log('  - Current balance (wei):', balance.toString());
-      console.log('  - Current balance (ETH):', formatEther(balance));
-      console.log('  - Amount > Balance?', amountWei > balance);
-      console.log('  - Remaining for gas (ETH):', formatEther(balance - amountWei));
-      
-      if (amountWei > balance) {
-        setError('Insufficient total balance');
-        return;
-      }
-
       setError('');
-      
-      // Estimate gas first to provide user feedback (simplified)
-      try {
-        console.log('⛽ Getting gas estimate for withdrawal...');
-        await estimateWithdrawalGas(amountWei);
-        console.log('✅ Gas estimate completed');
-      } catch (gasError) {
-        console.warn('⚠️ Gas estimation failed, proceeding with fallback strategy:', gasError);
-        // Continue with withdrawal using progressive gas limits
-      }
       
       console.log('🚀 Proceeding with withdrawal...');
       await withdrawTotal(amountWei);
@@ -110,16 +50,8 @@ const WithdrawForm: React.FC = () => {
       // Handle specific errors with better messaging
       let userMessage = 'Withdrawal failed. Please try again.';
       
-      if (err.message && err.message.includes('Insufficient funds for gas')) {
-        userMessage = 'Insufficient ETH for gas fees. The MAX button will calculate the optimal amount. Try using it or withdraw a smaller amount.';
-      } else if (err.message && err.message.includes('insufficient funds')) {
-        userMessage = 'Insufficient funds for gas fees. Try using the MAX button to calculate the optimal withdrawal amount.';
-      } else if (err.message && (err.message.includes('gas') || err.message.includes('out of gas'))) {
-        userMessage = 'Transaction failed due to gas issues. The system tried multiple gas limits but couldn\'t complete the transaction. Please try again.';
-      } else if (err.message && err.message.includes('custom error')) {
-        userMessage = 'Transaction failed due to a smart contract error. This might be due to insufficient balance in the vault or a contract restriction. Try a smaller amount.';
-      } else if (err.message && err.message.includes('execution reverted')) {
-        userMessage = 'Transaction failed due to a smart contract error. This might be due to insufficient balance in the vault or a contract restriction. Try a smaller amount.';
+      if (err.message && err.message.includes('insufficient funds')) {
+        userMessage = 'Insufficient funds. Please check your wallet balance and try a smaller amount.';
       } else if (err.message && err.message.includes('user rejected')) {
         userMessage = 'Transaction was cancelled by user.';
       } else if (err.message && err.message.includes('network')) {
@@ -129,40 +61,22 @@ const WithdrawForm: React.FC = () => {
       }
       
       setError(userMessage);
-      
-      // Note: The loading state will be reset by the withdrawTotal function in the hook
-      // If the error occurs here, the loading state should already be reset
     }
   };
 
-  const handleMaxClick = async () => {
-    if (!availableAmountWei || availableAmountWei === 0n) {
-      setError('No balance available for withdrawal');
-      return;
-    }
-
-    try {
-      console.log('🔍 MAX Button - Using calculated available amount...');
-      console.log(`  - Available amount: ${formatEther(availableAmountWei)} ETH`);
-      
-      // Use the pre-calculated available amount
-      setMaxAmountWei(availableAmountWei);
-      setAmount(formatEtherDisplay(availableAmountWei));
-      setError(''); // Clear any previous errors
-    } catch (error: any) {
-      console.error('❌ Error setting max amount:', error);
-      setMaxAmountWei(null);
-      setError('Failed to set maximum amount. Please try again.');
-    }
-  };
 
   // Handle success states and auto-return to normal form
   React.useEffect(() => {
     if (isWithdrawTotalSuccess) {
       setAmount('');
-      setMaxAmountWei(null);
       setError('');
       setShowSuccess(true);
+      
+      // Refresh balance immediately after successful withdrawal
+      console.log('🔄 WithdrawForm: Refreshing balance after successful withdrawal...');
+      refreshBalance().catch(error => {
+        console.error('❌ WithdrawForm: Error refreshing balance:', error);
+      });
       
       // Return to normal form after 3 seconds
       const timer = setTimeout(() => {
@@ -171,7 +85,7 @@ const WithdrawForm: React.FC = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [isWithdrawTotalSuccess]);
+  }, [isWithdrawTotalSuccess, refreshBalance]);
 
   if (!isConnected) {
     return null;
@@ -238,58 +152,14 @@ const WithdrawForm: React.FC = () => {
                 // Only allow numbers, decimal point, and comma (for locale compatibility)
                 const value = e.target.value.replace(/[^0-9.,]/g, '');
                 setAmount(value);
-                setMaxAmountWei(null); // Clear stored BigInt value when user manually changes amount
                 setError('');
                 clearTransactionError(); // Clear transaction error when user changes amount
               }}
               placeholder="0.0"
               inputMode="decimal"
-              max={(() => {
-                const actualBalanceWei = actualWithdrawableBalance as bigint;
-                const baseBuffer = parseEther('0.15');
-                const largeTransactionSize = parseEther('1000');
-                const veryLargeTransactionSize = parseEther('5000');
-                const extremelyLargeTransactionSize = parseEther('8000');
-                let bufferAmount = baseBuffer;
-                if (actualBalanceWei > extremelyLargeTransactionSize) {
-                  const percentageBuffer = actualBalanceWei / 50n;
-                  const minBuffer = parseEther('2');
-                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                } else if (actualBalanceWei > veryLargeTransactionSize) {
-                  const percentageBuffer = actualBalanceWei / 100n;
-                  const minBuffer = parseEther('1');
-                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                } else if (actualBalanceWei > largeTransactionSize) {
-                  const percentageBuffer = actualBalanceWei / 200n;
-                  const minBuffer = parseEther('0.5');
-                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
-                }
-                // Use BigInt math and convert to number only at the end to avoid precision errors
-                const maxAmount = actualBalanceWei - bufferAmount;
-                return Number(formatEther(maxAmount));
-              })()}
-              className="form-input w-full px-4 py-3 pr-20 text-lg"
+              className="form-input w-full px-4 py-3 pr-16 text-lg"
             />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={handleMaxClick}
-                disabled={isEstimatingGas || !availableAmountWei || availableAmountWei === 0n}
-                className={`px-2 py-1 text-xs rounded transition-colors ${
-                  isEstimatingGas || !availableAmountWei || availableAmountWei === 0n
-                    ? 'bg-gray-500 cursor-not-allowed text-gray-400' 
-                    : 'bg-white/10 hover:bg-white/20 text-gray-300'
-                }`}
-              >
-                {isEstimatingGas ? (
-                  <div className="flex items-center space-x-1">
-                    <i className="fas fa-spinner animate-spin text-xs"></i>
-                    <span>...</span>
-                  </div>
-                ) : (
-                  'Max'
-                )}
-              </button>
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
               <span className="text-gray-400 text-sm">ETH</span>
             </div>
           </div>
@@ -298,10 +168,9 @@ const WithdrawForm: React.FC = () => {
           <div className="mt-3">
             <p className="text-sm text-gray-400">
               Available for withdrawal: <span className="text-green-400 font-medium">
-                {availableAmountWei ? formatEtherDisplay(availableAmountWei) : 'Calculating...'}
-              </span> ETH
+                {actualWithdrawableBalance ? formatEther(actualWithdrawableBalance as bigint) : '0'} ETH
+              </span>
             </p>
-            {/* Gas estimation display removed due to viem compatibility issues */}
           </div>
         </div>
 
@@ -316,7 +185,7 @@ const WithdrawForm: React.FC = () => {
         {/* Withdraw Button */}
         <button
           onClick={handleWithdraw}
-          disabled={isWithdrawTotalLoading || !amount || !availableAmountWei || availableAmountWei === 0n}
+          disabled={isWithdrawTotalLoading || !amount}
           className="btn-primary w-full py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isWithdrawTotalLoading ? (

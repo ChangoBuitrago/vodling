@@ -10,6 +10,7 @@ import DepositForm from './components/DepositForm';
 import WithdrawForm from './components/WithdrawForm';
 import BalanceCard from './components/BalanceCard';
 import YieldTester from './components/YieldTester';
+import { Web3Provider } from './contexts/Web3Context';
 
 // Create a localhost chain configuration
 const localhostChain = {
@@ -58,7 +59,8 @@ function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <div className="app-container">
+        <Web3Provider>
+          <div className="app-container">
           {/* Animated background */}
           <div className="animated-bg"></div>
           
@@ -105,7 +107,8 @@ function App() {
               onClick={() => setIsTestingToolsOpen(false)}
             />
           )}
-        </div>
+          </div>
+        </Web3Provider>
       </QueryClientProvider>
     </WagmiProvider>
   );
