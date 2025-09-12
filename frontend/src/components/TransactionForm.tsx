@@ -208,8 +208,8 @@ const TransactionForm: React.FC = () => {
       <div className="glass-effect p-8 text-center fade-in">
         <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6 ${
           successType === 'deposit' 
-            ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-            : 'bg-gradient-to-r from-purple-500 to-purple-600'
+            ? 'bg-gradient-to-r from-vodl-500 to-vodl-600' 
+            : 'bg-gradient-to-r from-violet-600 to-violet-700'
         }`}>
           <i className="fas fa-check text-2xl text-white"></i>
         </div>
@@ -346,7 +346,7 @@ const TransactionForm: React.FC = () => {
               <div className="balance-minimal">
                 <span className="text-xs text-gray-400">
                   {selectedAction === 'deposit' ? 'Available for deposit:' : 'Available for withdrawal:'} 
-                  <span className={`font-medium ${selectedAction === 'deposit' ? 'text-blue-400' : 'text-purple-400'}`}>
+                  <span className={`font-medium ${selectedAction === 'deposit' ? 'text-green-400' : 'text-violet-400'}`}>
                     {selectedAction === 'deposit' 
                       ? walletBalance ? ` ${parseFloat(formatEther(walletBalance.value)).toFixed(4)} ETH` : ' 0.0000 ETH'
                       : actualWithdrawableBalance ? ` ${parseFloat(formatEther(actualWithdrawableBalance as bigint)).toFixed(4)} ETH` : ' 0.0000 ETH'
@@ -369,9 +369,9 @@ const TransactionForm: React.FC = () => {
                 background: isDepositLoading || isWithdrawTotalLoading 
                   ? 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))'
                   : selectedAction === 'deposit'
-                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.9))'
-                    : 'linear-gradient(135deg, rgba(168, 139, 250, 0.8), rgba(139, 92, 246, 0.9))',
-                border: `1px solid ${isDepositLoading || isWithdrawTotalLoading ? 'rgba(255,255,255,0.1)' : selectedAction === 'deposit' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(168, 139, 250, 0.3)'}`,
+                    ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.9))'
+                    : 'linear-gradient(135deg, rgba(147, 51, 234, 0.8), rgba(124, 58, 237, 0.9))',
+                border: `1px solid ${isDepositLoading || isWithdrawTotalLoading ? 'rgba(255,255,255,0.1)' : selectedAction === 'deposit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(147, 51, 234, 0.3)'}`,
                 boxShadow: 'none',
                 borderRadius: '12px',
                 transition: 'all 0.3s ease',
