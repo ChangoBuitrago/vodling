@@ -3,13 +3,11 @@
   "version": "1.0.0",
   "description": "Vodling Protocol - Principal Protected ETH Staking",
   "scripts": {
+    "start": "./start.sh",
     "build": "forge build",
     "test": "forge test",
     "test:verbose": "forge test -vvv",
     "test:gas": "forge test --gas-report",
-    "deploy:goerli": "forge script script/Deploy.s.sol --rpc-url goerli --broadcast --verify",
-    "deploy:sepolia": "forge script script/Deploy.s.sol --rpc-url sepolia --broadcast --verify",
-    "deploy:mainnet": "forge script script/Deploy.s.sol --rpc-url mainnet --broadcast --verify",
     "coverage": "forge coverage",
     "lint": "forge fmt",
     "size": "forge build --sizes"
@@ -17,7 +15,6 @@
   "devDependencies": {
     "@openzeppelin/contracts": "^4.9.0"
   },
-  "main": "test_withdraw_yield.js",
   "directories": {
     "lib": "lib",
     "test": "test"

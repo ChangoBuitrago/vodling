@@ -6,7 +6,7 @@ interface TransactionLoaderProps {
   isSuccess: boolean;
   error?: string;
   transactionHash?: string;
-  type: 'deposit' | 'withdrawPrincipal' | 'withdrawYield';
+  type: 'deposit' | 'withdrawTotal';
 }
 
 const TransactionLoader: React.FC<TransactionLoaderProps> = ({
@@ -36,10 +36,8 @@ const TransactionLoader: React.FC<TransactionLoaderProps> = ({
     switch (type) {
       case 'deposit':
         return 'Depositing ETH';
-      case 'withdrawPrincipal':
-        return 'Withdrawing Principal';
-      case 'withdrawYield':
-        return 'Withdrawing Yield';
+      case 'withdrawTotal':
+        return 'Withdrawing Funds';
       default:
         return 'Processing Transaction';
     }

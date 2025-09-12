@@ -1,19 +1,19 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x0165878A594ca255338adfa4d48449f69242Eb8F', // Local development - updated deployment
+  LOCAL: '0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E', // Local development - updated with new getUserActualWithdrawableBalance function
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9', // Local development - updated deployment
+  LOCAL: '0xc5a5C42992dECbae36851359345FE25997F5C42d', // Local development - updated with new deployment
 };
 
 export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707', // Local development - updated deployment
+  LOCAL: '0x67d269191c92Caf3cD7723F116c85e6E9bf55933', // Local development - updated with new deployment
 };
 
 export const SAFE_VAULT_ABI = [
@@ -189,6 +189,13 @@ export const SAFE_VAULT_ABI = [
   },
   {
     "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "getUserActualWithdrawableBalance",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
     "name": "getUserYield",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
@@ -211,6 +218,13 @@ export const SAFE_VAULT_ABI = [
   {
     "inputs": [],
     "name": "minDeposit",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minWithdraw",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"
@@ -311,7 +325,7 @@ export const SAFE_VAULT_ABI = [
   },
   {
     "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
-    "name": "withdrawYield",
+    "name": "withdrawTotal",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

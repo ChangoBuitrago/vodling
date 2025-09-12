@@ -10,19 +10,13 @@ const BalanceCard: React.FC = () => {
     principalBalance, 
     yieldBalance, 
     totalBalance, 
-    isLoading
+    isLoading,
+    isWithdrawTotalLoading
   } = useSafeVault();
   
   const fadeInRef = useFadeIn(0.2);
   const staggerRef = useStaggerChildren(0.4);
   
-  // Debug logging
-  React.useEffect(() => {
-    console.log('BalanceCard - Principal Balance:', principalBalance);
-    console.log('BalanceCard - Yield Balance:', yieldBalance);
-    console.log('BalanceCard - Total Balance:', totalBalance);
-    console.log('BalanceCard - Is Loading:', isLoading);
-  }, [principalBalance, yieldBalance, totalBalance, isLoading]);
 
   if (!isConnected) {
     return (
@@ -56,6 +50,12 @@ const BalanceCard: React.FC = () => {
       <h3 className="text-xl font-bold text-white mb-6 flex items-center">
         <i className="fas fa-chart-line text-gradient-vodl mr-3"></i>
         Your Vodling Portfolio
+        {isWithdrawTotalLoading && (
+          <span className="ml-2 text-sm text-gray-400 flex items-center">
+            <i className="fas fa-sync-alt animate-spin mr-1"></i>
+            Updating...
+          </span>
+        )}
       </h3>
       
       <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">

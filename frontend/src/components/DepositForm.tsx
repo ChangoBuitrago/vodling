@@ -16,7 +16,9 @@ const DepositForm: React.FC = () => {
     isDepositWriting,
     isDepositConfirming,
     isDepositSuccess,
-    depositTx
+    depositTx,
+    transactionError,
+    clearTransactionError
   } = useSafeVault();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
@@ -33,30 +35,96 @@ const DepositForm: React.FC = () => {
 
     try {
       const amountWei = parseEther(amount);
-      const minWei = parseEther('0.01'); // minDeposit from contract
-      const maxWei = parseEther('1000'); // maxDeposit from contract
-
-      if (amountWei < minWei) {
-        setError(`Minimum deposit is ${formatEther(minWei)} ETH`);
-        return;
-      }
-
-      if (amountWei > maxWei) {
-        setError(`Maximum deposit is ${formatEther(maxWei)} ETH`);
+      const balance = walletBalance?.value as bigint;
+      
+      console.log('🔍 Deposit Total Debug:');
+      console.log('  - Input amount:', amount);
+      console.log('  - Parsed amount (wei):', amountWei.toString());
+      console.log('  - Parsed amount (ETH):', formatEther(amountWei));
+      console.log('  - Current wallet balance (wei):', balance?.toString());
+      console.log('  - Current wallet balance (ETH):', balance ? formatEther(balance) : 'N/A');
+      console.log('  - Amount > Balance?', balance ? amountWei > balance : 'N/A');
+      console.log('  - Remaining for gas (ETH):', balance ? formatEther(balance - amountWei) : 'N/A');
+      
+      if (balance && amountWei > balance) {
+        setError('Insufficient wallet balance');
         return;
       }
 
       setError('');
+      
+      console.log('🚀 Proceeding with deposit...');
       await deposit(amountWei);
-      // Don't clear amount immediately - let user see the success state
+      setAmount('');
     } catch (err: any) {
-      setError(err.message || 'Deposit failed');
+      console.error('Deposit error:', err);
+      
+      // Handle specific errors with better messaging
+      if (err.message && err.message.includes('Insufficient funds for gas')) {
+        setError('Insufficient ETH for gas fees. For large transactions, you need more ETH reserved for gas. Try using the MAX button or depositing a smaller amount.');
+      } else if (err.message && err.message.includes('insufficient funds')) {
+        setError('Insufficient funds for gas fees. Try depositing a smaller amount to leave more ETH for gas costs.');
+      } else if (err.message && (err.message.includes('gas') || err.message.includes('out of gas'))) {
+        setError('Transaction failed due to gas issues. The system tried multiple gas limits but couldn\'t complete the transaction. Please try again or contact support.');
+      } else if (err.message && err.message.includes('custom error')) {
+        setError('Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try depositing a smaller amount.');
+      } else if (err.message && err.message.includes('execution reverted')) {
+        setError('Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try depositing a smaller amount.');
+      } else if (err.message && err.message.includes('total cost') && err.message.includes('exceeds the balance')) {
+        setError('Transaction failed: The total cost (gas + value) exceeds your balance. For large deposits, more ETH is needed for gas fees. Try using the MAX button or depositing a smaller amount.');
+      } else {
+        setError(err.message || 'Deposit failed');
+      }
     }
   };
 
   const handleMaxClick = () => {
-    if (walletBalance) {
-      setAmount(formatEther(walletBalance.value));
+    // Use the wallet balance but leave a dynamic buffer for gas costs
+    const walletBalanceWei = walletBalance?.value as bigint;
+    
+    // Calculate a more conservative buffer based on the transaction size
+    // For large transactions, we need more gas buffer
+    const baseBuffer = parseEther('0.15'); // Base buffer
+    const largeTransactionSize = parseEther('1000'); // Consider transactions over 1000 ETH as "large"
+    const veryLargeTransactionSize = parseEther('5000'); // Consider transactions over 5000 ETH as "very large"
+    const extremelyLargeTransactionSize = parseEther('8000'); // Consider transactions over 8000 ETH as "extremely large"
+    
+    // If the wallet balance is very large, use a more conservative approach
+    let bufferAmount = baseBuffer;
+    if (walletBalanceWei > extremelyLargeTransactionSize) {
+      // For extremely large balances (>8000 ETH), use an exponential buffer (2% of balance, minimum 2 ETH)
+      const percentageBuffer = walletBalanceWei / 50n; // 2%
+      const minBuffer = parseEther('2');
+      bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+    } else if (walletBalanceWei > veryLargeTransactionSize) {
+      // For very large balances (5000-8000 ETH), use a higher percentage buffer (1% of balance, minimum 1 ETH)
+      const percentageBuffer = walletBalanceWei / 100n; // 1%
+      const minBuffer = parseEther('1');
+      bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+    } else if (walletBalanceWei > largeTransactionSize) {
+      // For large balances (1000-5000 ETH), use a moderate percentage buffer (0.5% of balance, minimum 0.5 ETH)
+      const percentageBuffer = walletBalanceWei / 200n; // 0.5%
+      const minBuffer = parseEther('0.5');
+      bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+    }
+    
+    const availableAmount = walletBalanceWei - bufferAmount;
+    
+    console.log('🔍 MAX Button Debug (Dynamic Buffer):');
+    console.log(`  - Wallet balance: ${formatEther(walletBalanceWei)} ETH`);
+    console.log(`  - Base buffer: ${formatEther(baseBuffer)} ETH`);
+    console.log(`  - Dynamic buffer: ${formatEther(bufferAmount)} ETH`);
+    console.log(`  - Available amount: ${formatEther(availableAmount)} ETH`);
+    console.log(`  - Final max amount: ${formatEther(availableAmount)} ETH`);
+    console.log(`  - Remaining for gas: ${formatEther(bufferAmount)} ETH`);
+    console.log(`  - Buffer percentage: ${((Number(bufferAmount) / Number(walletBalanceWei)) * 100).toFixed(2)}%`);
+    
+    if (availableAmount > 0n) {
+      setAmount(formatEther(availableAmount));
+    } else {
+      // If balance is too small, don't set any amount
+      setAmount('');
+      setError(`Insufficient balance. You need at least ${formatEther(bufferAmount)} ETH for gas fees and timing buffer.`);
     }
   };
 
@@ -138,11 +206,35 @@ const DepositForm: React.FC = () => {
               type="number"
               id="deposit-amount"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setError('');
+                clearTransactionError(); // Clear transaction error when user changes amount
+              }}
               placeholder="0.0"
-              step="0.01"
-              min="0.01"
-              max="1000"
+              step="0.001"
+              max={walletBalance ? (() => {
+                const walletBalanceWei = walletBalance.value;
+                const baseBuffer = parseEther('0.15');
+                const largeTransactionSize = parseEther('1000');
+                const veryLargeTransactionSize = parseEther('5000');
+                const extremelyLargeTransactionSize = parseEther('8000');
+                let bufferAmount = baseBuffer;
+                if (walletBalanceWei > extremelyLargeTransactionSize) {
+                  const percentageBuffer = walletBalanceWei / 50n;
+                  const minBuffer = parseEther('2');
+                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+                } else if (walletBalanceWei > veryLargeTransactionSize) {
+                  const percentageBuffer = walletBalanceWei / 100n;
+                  const minBuffer = parseEther('1');
+                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+                } else if (walletBalanceWei > largeTransactionSize) {
+                  const percentageBuffer = walletBalanceWei / 200n;
+                  const minBuffer = parseEther('0.5');
+                  bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+                }
+                return parseFloat(formatEther(walletBalanceWei - bufferAmount));
+              })() : undefined}
               className="form-input w-full px-4 py-3 pr-20 text-lg"
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
@@ -161,17 +253,38 @@ const DepositForm: React.FC = () => {
           {walletBalance && (
             <div className="mt-3">
               <p className="text-sm text-gray-400">
-                Wallet Balance: <span className="text-white font-medium">{parseFloat(formatEther(walletBalance.value)).toFixed(4)} ETH</span>
+                Available for deposit: <span className="text-green-400 font-medium">{(() => {
+                  const walletBalanceWei = walletBalance.value;
+                  const baseBuffer = parseEther('0.15');
+                  const largeTransactionSize = parseEther('1000');
+                  const veryLargeTransactionSize = parseEther('5000');
+                  const extremelyLargeTransactionSize = parseEther('8000');
+                  let bufferAmount = baseBuffer;
+                  if (walletBalanceWei > extremelyLargeTransactionSize) {
+                    const percentageBuffer = walletBalanceWei / 50n;
+                    const minBuffer = parseEther('2');
+                    bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+                  } else if (walletBalanceWei > veryLargeTransactionSize) {
+                    const percentageBuffer = walletBalanceWei / 100n;
+                    const minBuffer = parseEther('1');
+                    bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+                  } else if (walletBalanceWei > largeTransactionSize) {
+                    const percentageBuffer = walletBalanceWei / 200n;
+                    const minBuffer = parseEther('0.5');
+                    bufferAmount = percentageBuffer > minBuffer ? percentageBuffer : minBuffer;
+                  }
+                  return parseFloat(formatEther(walletBalanceWei - bufferAmount)).toFixed(6);
+                })()} ETH</span>
               </p>
             </div>
           )}
         </div>
 
         {/* Error Display */}
-        {error && (
+        {(error || transactionError) && (
           <div className="flex items-center p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
             <i className="fas fa-exclamation-triangle text-red-400 mr-3"></i>
-            <p className="text-sm text-red-400">{error}</p>
+            <p className="text-sm text-red-400">{error || transactionError}</p>
           </div>
         )}
 
@@ -212,10 +325,6 @@ const DepositForm: React.FC = () => {
             <li className="flex items-start">
               <i className="fas fa-chart-line text-vodl-400 mr-2 mt-0.5 text-xs"></i>
               Yield accumulates over time and can be withdrawn separately
-            </li>
-            <li className="flex items-start">
-              <i className="fas fa-coins text-vodl-400 mr-2 mt-0.5 text-xs"></i>
-              Min: 0.01 ETH, Max: 1000 ETH per deposit
             </li>
           </ul>
         </div>
