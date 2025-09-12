@@ -49,16 +49,20 @@ const BalanceCard: React.FC = () => {
 
   return (
     <div ref={fadeInRef} className="glass-effect p-6">
-      <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-        <i className="fas fa-chart-line text-gradient-vodl mr-3"></i>
-        Your Vodling Portfolio
-        {(isWithdrawTotalLoading || isRefreshing) && (
-          <span className="ml-2 text-sm text-gray-400 flex items-center">
-            <i className="fas fa-sync-alt animate-spin mr-1"></i>
-            Updating...
-          </span>
-        )}
-      </h3>
+      <div className="flex items-center mb-6">
+        <div className="strategy-icon icon-bg-vodl">
+          <i className="fas fa-chart-line icon-text-vodl text-xl"></i>
+        </div>
+        <h3 className="text-xl font-bold text-white ml-4 flex items-center">
+          Your Portfolio
+          {(isWithdrawTotalLoading || isRefreshing) && (
+            <span className="ml-2 text-sm text-gray-400 flex items-center">
+              <i className="fas fa-sync-alt animate-spin mr-1"></i>
+              Updating...
+            </span>
+          )}
+        </h3>
+      </div>
       
       <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Principal Balance */}

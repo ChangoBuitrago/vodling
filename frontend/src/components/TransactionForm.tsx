@@ -250,9 +250,9 @@ const TransactionForm: React.FC = () => {
     <div ref={fadeInRef} className="glass-effect p-6">
       <div className="flex items-center mb-6">
         <div className="strategy-icon icon-bg-green">
-          <i className="fas fa-exchange-alt icon-text-green text-xl"></i>
+          <i className="fas fa-vault icon-text-green text-xl"></i>
         </div>
-        <h3 className="text-xl font-bold text-white ml-4">Transaction</h3>
+        <h3 className="text-xl font-bold text-white ml-4">Your Vault</h3>
       </div>
 
       <div className="space-y-6">
@@ -269,16 +269,9 @@ const TransactionForm: React.FC = () => {
           {/* Deposit Button */}
           <button
             onClick={() => setSelectedAction('deposit')}
-            className="py-4 text-lg font-semibold w-full strategy-card"
-            style={{
-              background: selectedAction === 'deposit' 
-                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.9))'
-                : 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-              border: `1px solid ${selectedAction === 'deposit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)'}`,
-              boxShadow: 'none',
-              borderRadius: '12px',
-              transition: 'all 0.4s ease',
-            }}
+            className={`py-4 text-lg font-semibold w-full strategy-card ${
+              selectedAction === 'deposit' ? 'deposit-selected' : 'deposit-unselected'
+            }`}
           >
             <span className="flex items-center justify-center">
               <i className="fas fa-arrow-up mr-2"></i>
@@ -289,16 +282,9 @@ const TransactionForm: React.FC = () => {
           {/* Withdraw Button */}
           <button
             onClick={() => setSelectedAction('withdraw')}
-            className="py-4 text-lg font-semibold w-full strategy-card"
-            style={{
-              background: selectedAction === 'withdraw' 
-                ? 'linear-gradient(135deg, rgba(168, 139, 250, 0.8), rgba(139, 92, 246, 0.9))'
-                : 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-              border: `1px solid ${selectedAction === 'withdraw' ? 'rgba(168, 139, 250, 0.3)' : 'rgba(255,255,255,0.1)'}`,
-              boxShadow: 'none',
-              borderRadius: '12px',
-              transition: 'all 0.4s ease',
-            }}
+            className={`py-4 text-lg font-semibold w-full strategy-card ${
+              selectedAction === 'withdraw' ? 'withdraw-selected' : 'withdraw-unselected'
+            }`}
           >
             <span className="flex items-center justify-center">
               <i className="fas fa-arrow-down mr-2"></i>

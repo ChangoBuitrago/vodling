@@ -101,7 +101,6 @@ body {
 }
 
 .strategy-card:hover {
-  transform: translateY(-10px);
   background: rgba(30, 30, 35, 0.6);
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 15px 30px rgba(0,0,0,0.25);
@@ -386,4 +385,25 @@ input[type="number"] {
   background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+/* Transaction form button states */
+.deposit-selected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.9)) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.deposit-unselected {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.withdraw-selected {
+  background: linear-gradient(135deg, rgba(168, 139, 250, 0.8), rgba(139, 92, 246, 0.9)) !important;
+  border: 1px solid rgba(168, 139, 250, 0.3) !important;
+}
+
+.withdraw-unselected {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
 }
