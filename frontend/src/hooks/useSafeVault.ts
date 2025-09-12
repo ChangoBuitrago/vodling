@@ -475,6 +475,7 @@ export const useSafeVault = () => {
     console.log('  - Deposit error:', depositError);
     console.log('  - Deposit tx hash:', depositTx);
     
+    // Only refetch data on successful transactions, not on errors or cancellations
     if (isDepositSuccess && depositReceipt) {
       console.log('✅ Deposit success detected, refetching data...');
       setIsDepositPending(false);
@@ -488,6 +489,7 @@ export const useSafeVault = () => {
       }, 2000);
     }
     
+    // Handle errors but don't refetch data - just reset loading state
     if (depositError) {
       console.log('❌ Deposit confirmation error:', depositError);
       console.log('🔍 Error type:', depositError?.name);
@@ -495,15 +497,27 @@ export const useSafeVault = () => {
       // @ts-ignore - details might exist on some error types
       console.log('🔍 Error details:', depositError?.details);
       
-      // Set user-friendly error message
-      const errorMessage = depositError?.message || 'Transaction failed';
-      if (errorMessage.includes('custom error') || errorMessage.includes('execution reverted')) {
-        setTransactionError('Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try depositing a smaller amount.');
+      // Check if this is a user cancellation (don't show error for cancellations)
+      const errorMessage = depositError?.message || '';
+      const isUserCancellation = errorMessage.includes('user rejected') || 
+                                errorMessage.includes('User denied') ||
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('rejected');
+      
+      if (!isUserCancellation) {
+        // Set user-friendly error message only for non-cancellation errors
+        if (errorMessage.includes('custom error') || errorMessage.includes('execution reverted')) {
+          setTransactionError('Transaction failed due to a smart contract error. This might be due to insufficient balance or a contract restriction. Try depositing a smaller amount.');
+        } else {
+          setTransactionError(`Transaction failed: ${errorMessage}`);
+        }
       } else {
-        setTransactionError(`Transaction failed: ${errorMessage}`);
+        console.log('🚫 User cancelled transaction - not showing error message');
+        // Clear any existing error message for cancellations
+        setTransactionError(null);
       }
       
-      // Reset loading state for any confirmation error
+      // Reset loading state for any confirmation error (including cancellations)
       setIsDepositPending(false);
     }
   }, [isDepositSuccess, isDepositConfirming, depositReceipt, depositError, depositTx, refetchAllData]);
@@ -516,6 +530,7 @@ export const useSafeVault = () => {
     console.log('  - Withdraw error:', withdrawTotalError);
     console.log('  - Withdraw tx hash:', withdrawTotalTx);
     
+    // Only refetch data on successful transactions, not on errors or cancellations
     if (isWithdrawTotalSuccess && withdrawTotalReceipt) {
       console.log('✅ Withdraw total success detected, refetching data...');
       setIsWithdrawTotalPending(false);
@@ -529,6 +544,7 @@ export const useSafeVault = () => {
       }, 2000);
     }
     
+    // Handle errors but don't refetch data - just reset loading state
     if (withdrawTotalError) {
       console.log('❌ Withdraw confirmation error:', withdrawTotalError);
       console.log('🔍 Error type:', withdrawTotalError?.name);
@@ -536,15 +552,27 @@ export const useSafeVault = () => {
       // @ts-ignore - details might exist on some error types
       console.log('🔍 Error details:', withdrawTotalError?.details);
       
-      // Set user-friendly error message
-      const errorMessage = withdrawTotalError?.message || 'Transaction failed';
-      if (errorMessage.includes('custom error') || errorMessage.includes('execution reverted')) {
-        setTransactionError('Transaction failed due to a smart contract error. This might be due to insufficient balance in the vault or a contract restriction. Try withdrawing a smaller amount.');
+      // Check if this is a user cancellation (don't show error for cancellations)
+      const errorMessage = withdrawTotalError?.message || '';
+      const isUserCancellation = errorMessage.includes('user rejected') || 
+                                errorMessage.includes('User denied') ||
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('rejected');
+      
+      if (!isUserCancellation) {
+        // Set user-friendly error message only for non-cancellation errors
+        if (errorMessage.includes('custom error') || errorMessage.includes('execution reverted')) {
+          setTransactionError('Transaction failed due to a smart contract error. This might be due to insufficient balance in the vault or a contract restriction. Try withdrawing a smaller amount.');
+        } else {
+          setTransactionError(`Transaction failed: ${errorMessage}`);
+        }
       } else {
-        setTransactionError(`Transaction failed: ${errorMessage}`);
+        console.log('🚫 User cancelled transaction - not showing error message');
+        // Clear any existing error message for cancellations
+        setTransactionError(null);
       }
       
-      // Reset loading state for any confirmation error
+      // Reset loading state for any confirmation error (including cancellations)
       setIsWithdrawTotalPending(false);
     }
   }, [isWithdrawTotalSuccess, isWithdrawTotalConfirming, withdrawTotalReceipt, withdrawTotalError, withdrawTotalTx, refetchAllData]);

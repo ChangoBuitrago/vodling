@@ -114,12 +114,28 @@ export const useGasEstimation = () => {
         account: address as `0x${string}`,
       });
 
-      // Get current gas price
+      // Get current gas price and add a safety buffer for EIP-1559 transactions
+      // Note: For even more precise EIP-1559 estimation, we could use provider.getFeeData()
+      // which returns maxFeePerGas and maxPriorityFeePerGas directly, but applying buffers
+      // on top of getGasPrice() is still a robust approach for maximum reliability
       const gasPrice = await publicClient.getGasPrice();
-      const estimatedGasFee = gasLimit * gasPrice;
       
-      console.log('  - Gas limit:', gasLimit.toString());
-      console.log('  - Gas price:', gasPrice.toString());
+      // Add 20% buffer to account for EIP-1559 priority fees and gas price fluctuations
+      // Using BigInt math (120n, 100n) to avoid floating-point precision errors
+      const gasPriceBuffer = 120n; // 20% buffer
+      const adjustedGasPrice = (gasPrice * gasPriceBuffer) / 100n;
+      
+      // Add 10% buffer to gas limit to account for estimation inaccuracies
+      // Using BigInt math (110n, 100n) to avoid floating-point precision errors
+      const gasLimitBuffer = 110n; // 10% buffer
+      const adjustedGasLimit = (gasLimit * gasLimitBuffer) / 100n;
+      
+      const estimatedGasFee = adjustedGasLimit * adjustedGasPrice;
+      
+      console.log('  - Original gas limit:', gasLimit.toString());
+      console.log('  - Adjusted gas limit (with 10% buffer):', adjustedGasLimit.toString());
+      console.log('  - Base gas price:', gasPrice.toString());
+      console.log('  - Adjusted gas price (with 20% buffer):', adjustedGasPrice.toString());
       console.log('  - Estimated gas fee:', formatEther(estimatedGasFee), 'ETH');
 
       // Calculate the max deposit amount from the actual full balance
