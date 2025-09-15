@@ -65,7 +65,7 @@ const BalanceCard: React.FC = () => {
       
       <div ref={staggerRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Principal Balance */}
-        <div className="strategy-card glass-effect p-6">
+        <div className="strategy-card glass-effect p-6 principal-immutable">
           <div className="strategy-icon icon-bg-blue mx-auto mb-4">
             <i className="fas fa-coins icon-text-blue text-2xl"></i>
           </div>
@@ -79,7 +79,7 @@ const BalanceCard: React.FC = () => {
         </div>
 
         {/* Yield Only */}
-        <div className="strategy-card glass-effect p-6">
+        <div className="strategy-card glass-effect p-6 principal-immutable">
           <div className="strategy-icon icon-bg-green mx-auto mb-4">
             <i className="fas fa-seedling icon-text-green text-2xl"></i>
           </div>
@@ -93,7 +93,7 @@ const BalanceCard: React.FC = () => {
         </div>
 
         {/* Total Balance + APY Combined */}
-        <div className="strategy-card glass-effect p-6">
+        <div className="strategy-card glass-effect p-6 principal-immutable">
           <div className="strategy-icon icon-bg-indigo mx-auto mb-4">
             <i className="fas fa-chart-line icon-text-indigo text-2xl"></i>
           </div>
