@@ -9,7 +9,9 @@ const BalanceCard: React.FC = () => {
   const { isConnected } = useAccount();
   const { 
     isLoading,
-    isWithdrawTotalLoading
+    isWithdrawTotalLoading,
+    totalPrincipal,
+    totalYield
   } = useSafeVault();
   
   // Get balance state from Web3Context for immediate updates
@@ -18,6 +20,20 @@ const BalanceCard: React.FC = () => {
   const fadeInRef = useFadeIn(0.2);
   const staggerRef = useStaggerChildren(0.4);
   
+  // Calculate protocol APY - this shows the current yield rate across all users
+  const calculateProtocolAPY = () => {
+    if (totalPrincipal === 0n) return "0.00%";
+    
+    const protocolPrincipal = parseFloat(formatEther(totalPrincipal));
+    const protocolYield = parseFloat(formatEther(totalYield));
+    
+    if (protocolPrincipal === 0) return "0.00%";
+    
+    // Calculate APY based on protocol totals
+    // This gives a more accurate representation of current yield rate
+    const apy = (protocolYield / protocolPrincipal) * 100;
+    return `${apy.toFixed(2)}%`;
+  };
 
   if (!isConnected) {
     return (
@@ -106,17 +122,7 @@ const BalanceCard: React.FC = () => {
           <div className="border-t border-white/10 pt-3 mt-3">
             <p className="text-sm font-medium text-gray-400 mb-1">Current APY</p>
             <p className="text-xl font-bold text-gradient-indigo">
-              {(() => {
-                if (balanceState.principalBalance === 0n) return "0.00%";
-                const principal = parseFloat(formatEther(balanceState.principalBalance));
-                const yieldAmount = parseFloat(formatEther(balanceState.yieldBalance));
-                if (principal === 0) return "0.00%";
-                
-                // Simple APY calculation (this is a rough estimate)
-                // In a real implementation, you'd want to track time and calculate proper APY
-                const apy = (yieldAmount / principal) * 100;
-                return `${apy.toFixed(2)}%`;
-              })()}
+              {calculateProtocolAPY()}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Annual Percentage Yield
