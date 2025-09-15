@@ -1,19 +1,25 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new getUserActualWithdrawableBalance function
+  LOCAL: '0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new getUserActualWithdrawableBalance function
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x5fbdb2315678afecb367f032d93f642f64180aa3', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x0165878a594ca255338adfa4d48449f69242eb8f', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0xa513e6e4b8f2a923d98304ec87f64353c4d5c853', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+};
+
+export const TURBO_VAULT_ADDRESSES = {
+  MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
+  SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
+  LOCAL: '0x8a791620dd6260079bf849dc5567adc3f2fdc318', // Local development - auto-updated - auto-updated - auto-updated - auto-updated
 };
 
 export const SAFE_VAULT_ABI = [
@@ -136,6 +142,15 @@ export const SAFE_VAULT_ABI = [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "yieldAmount", "type": "uint256"}
+    ],
+    "name": "YieldHarvested",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "deposit",
     "outputs": [],
@@ -164,6 +179,13 @@ export const SAFE_VAULT_ABI = [
     "name": "getETHPrice",
     "outputs": [{"internalType": "int256", "name": "", "type": "int256"}],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "harvestAndCompound",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -270,6 +292,13 @@ export const SAFE_VAULT_ABI = [
       {"internalType": "uint256", "name": "_maxDeposit", "type": "uint256"}
     ],
     "name": "setDepositLimits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "_turboVault", "type": "address"}],
+    "name": "setTurboVault",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -447,6 +476,76 @@ export const MOCK_LIDO_ABI = [
     "name": "receive",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  }
+] as const;
+
+export const TURBO_VAULT_ABI = [
+  {
+    "inputs": [
+      {"internalType": "contract IERC20", "name": "asset_", "type": "address"},
+      {"internalType": "string", "name": "name_", "type": "string"},
+      {"internalType": "string", "name": "symbol_", "type": "string"}
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "from", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "shares", "type": "uint256"}
+    ],
+    "name": "YieldDeposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "owner", "type": "address"},
+      {"indexed": true, "internalType": "address", "name": "spender", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}
+    ],
+    "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "from", "type": "address"},
+      {"indexed": true, "internalType": "address", "name": "to", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}
+    ],
+    "name": "Transfer",
+    "type": "event"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "name": "depositYield",
+    "outputs": [{"internalType": "uint256", "name": "shares", "type": "uint256"}],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "asset",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalAssets",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
     "type": "function"
   }
 ] as const;

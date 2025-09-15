@@ -104,99 +104,14 @@ start_blockchain() {
     fi
 }
 
-# Deploy contracts
+# Deploy contracts and update frontend
 deploy_contracts() {
-    print_status "Deploying contracts to local blockchain..."
+    print_status "Deploying contracts and updating frontend..."
     
-    forge script script/DeployLocal.s.sol \
-        --rpc-url http://localhost:8545 \
-        --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
-        --broadcast
+    # Use the bootstrap script for deployment and address updates
+    ./bootstrap/deploy-contracts.sh
     
-    print_success "Contracts deployed successfully"
-}
-
-# Update frontend contract addresses
-update_frontend() {
-    print_status "Updating frontend contract addresses..."
-    
-    node -e "
-const fs = require('fs');
-const path = require('path');
-
-// Path to the latest deployment output
-const deploymentPath = path.join('broadcast', 'DeployLocal.s.sol', '31337', 'run-latest.json');
-const contractsPath = path.join('frontend', 'src', 'utils', 'contracts.ts');
-
-try {
-  // Read the deployment output
-  const deploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
-  
-  // Extract contract addresses from transactions
-  const addresses = {};
-  
-  deploymentData.transactions.forEach(tx => {
-    if (tx.transactionType === 'CREATE' && tx.contractAddress) {
-      const contractName = tx.contractName;
-      const address = tx.contractAddress;
-      
-      switch (contractName) {
-        case 'SafeVault':
-          addresses.SAFE_VAULT = address;
-          break;
-        case 'MockLido':
-          addresses.MOCK_LIDO = address;
-          break;
-        case 'MockChainlinkOracle':
-          addresses.MOCK_CHAINLINK_ORACLE = address;
-          break;
-      }
-    }
-  });
-  
-  console.log('Extracted addresses:', addresses);
-  
-  // Read the current contracts.ts file
-  let contractsContent = fs.readFileSync(contractsPath, 'utf8');
-  
-  // Update the LOCAL addresses
-  if (addresses.SAFE_VAULT) {
-    contractsContent = contractsContent.replace(
-      /(SAFE_VAULT_ADDRESSES = \{[\s\S]*?LOCAL: ')0x[a-fA-F0-9]+('.*?\/\/ Local development).*?/,
-      \`\$1\${addresses.SAFE_VAULT}\$2 - auto-updated\`
-    );
-  }
-  
-  if (addresses.MOCK_LIDO) {
-    contractsContent = contractsContent.replace(
-      /(MOCK_LIDO_ADDRESSES = \{[\s\S]*?LOCAL: ')0x[a-fA-F0-9]+('.*?\/\/ Local development).*?/,
-      \`\$1\${addresses.MOCK_LIDO}\$2 - auto-updated\`
-    );
-  }
-  
-  if (addresses.MOCK_CHAINLINK_ORACLE) {
-    contractsContent = contractsContent.replace(
-      /(MOCK_CHAINLINK_ORACLE_ADDRESSES = \{[\s\S]*?LOCAL: ')0x[a-fA-F0-9]+('.*?\/\/ Local development).*?/,
-      \`\$1\${addresses.MOCK_CHAINLINK_ORACLE}\$2 - auto-updated\`
-    );
-  }
-  
-  // Write the updated content back
-  fs.writeFileSync(contractsPath, contractsContent);
-  
-  console.log('✅ Contract addresses updated successfully!');
-  console.log('Updated addresses:');
-  console.log(\`  SafeVault: \${addresses.SAFE_VAULT}\`);
-  console.log(\`  MockLido: \${addresses.MOCK_LIDO}\`);
-  console.log(\`  MockChainlinkOracle: \${addresses.MOCK_CHAINLINK_ORACLE}\`);
-  
-} catch (error) {
-  console.error('❌ Error updating contract addresses:', error.message);
-  process.exit(1);
-}
-"
-    
-    print_success "Frontend contract addresses updated"
+    print_success "Contracts deployed and frontend updated"
 }
 
 # Start frontend
@@ -243,7 +158,6 @@ main() {
     install_dependencies
     start_blockchain
     deploy_contracts
-    update_frontend
     
     echo
     print_success "🎉 Setup complete! Starting frontend..."

@@ -1,10 +1,6 @@
 import React from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
-interface HeaderProps {
-  onToggleTestingTools: () => void;
-}
-
 const ConnectButton: React.FC = () => {
   const { isConnected, address } = useAccount();
   const { connect, connectors } = useConnect();
@@ -44,8 +40,7 @@ const ConnectButton: React.FC = () => {
   );
 };
 
-const Header: React.FC<HeaderProps> = ({ onToggleTestingTools }) => {
-  const { isConnected } = useAccount();
+const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-lg">
@@ -70,17 +65,6 @@ const Header: React.FC<HeaderProps> = ({ onToggleTestingTools }) => {
           </div>
           
           <div className="flex items-center space-x-3">
-            {/* Testing Tools Toggle Button - Only show when connected */}
-            {isConnected && (
-              <button
-                onClick={onToggleTestingTools}
-                className="btn-secondary px-3 py-2 text-sm font-medium"
-                title="Toggle Testing Tools"
-              >
-                <i className="fas fa-flask mr-2"></i>
-                Testing Tools
-              </button>
-            )}
             <ConnectButton />
           </div>
         </div>

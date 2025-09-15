@@ -81,6 +81,9 @@ try {
         case 'MockChainlinkOracle':
           addresses.MOCK_CHAINLINK_ORACLE = address;
           break;
+        case 'TurboVault':
+          addresses.TURBO_VAULT = address;
+          break;
       }
     }
   });
@@ -112,6 +115,13 @@ try {
     );
   }
   
+  if (addresses.TURBO_VAULT) {
+    contractsContent = contractsContent.replace(
+      /(TURBO_VAULT_ADDRESSES = \{[\s\S]*?LOCAL: ')0x[a-fA-F0-9]+('.*?\/\/ Local development).*?/,
+      \`\$1\${addresses.TURBO_VAULT}\$2 - auto-updated\`
+    );
+  }
+  
   // Write the updated content back
   fs.writeFileSync(contractsPath, contractsContent);
   
@@ -120,6 +130,7 @@ try {
   console.log(\`  SafeVault: \${addresses.SAFE_VAULT}\`);
   console.log(\`  MockLido: \${addresses.MOCK_LIDO}\`);
   console.log(\`  MockChainlinkOracle: \${addresses.MOCK_CHAINLINK_ORACLE}\`);
+  console.log(\`  TurboVault: \${addresses.TURBO_VAULT}\`);
   
 } catch (error) {
   console.error('❌ Error updating contract addresses:', error.message);

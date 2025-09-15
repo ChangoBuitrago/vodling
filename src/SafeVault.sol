@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/ILido.sol";
 import "./interfaces/IChainlinkOracle.sol";
+import "./interfaces/ITurboVault.sol";
 
 /**
  * @title SafeVault
@@ -27,6 +28,9 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     
     /// @dev Chainlink price feed for ETH/USD
     IChainlinkOracle public immutable ethPriceFeed;
+    
+    /// @dev TurboVault contract address for yield distribution
+    address public turboVault;
     
     /// @dev Total principal deposited by all users
     uint256 public totalPrincipal;
@@ -53,6 +57,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     event WithdrawPrincipal(address indexed user, uint256 amount, uint256 stETHShares);
     event WithdrawTotal(address indexed user, uint256 amount, uint256 stETHShares);
     event LimitsUpdated(uint256 minDeposit, uint256 maxDeposit);
+    event YieldHarvested(uint256 timestamp, uint256 yieldAmount);
     
     // ============ Errors ============
     
@@ -165,6 +170,35 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         emit WithdrawTotal(msg.sender, actualEthAmount, sharesToWithdraw);
     }
     
+    /**
+     * @dev Harvest yield and compound it to TurboVault
+     * This function calculates the total yield and transfers it to TurboVault
+     */
+    function harvestAndCompound() external onlyOwner {
+        uint256 totalYield = this.getTotalYield();
+        require(totalYield > 0, "No yield to harvest");
+        require(turboVault != address(0), "TurboVault not set");
+        
+        // Get current total stETH value and shares
+        uint256 totalStETHShares = lido.sharesOf(address(this));
+        uint256 currentTotalValue = lido.getPooledEthByShares(totalStETHShares);
+        
+        // Calculate yield as a percentage of total shares
+        // yieldShares = (totalYield / currentTotalValue) * totalStETHShares
+        uint256 yieldShares = (totalStETHShares * totalYield) / currentTotalValue;
+        
+        require(yieldShares > 0, "No yield shares to harvest");
+        require(yieldShares <= totalStETHShares, "Yield shares exceed total shares");
+        
+        // Approve TurboVault to spend stETH
+        stETH.approve(turboVault, yieldShares);
+        
+        // Call TurboVault's depositYield function directly
+        ITurboVault(turboVault).depositYield(yieldShares);
+        
+        emit YieldHarvested(block.timestamp, totalYield);
+    }
+    
     // ============ View Functions ============
     
     /**
@@ -258,6 +292,15 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
      */
     function unpause() external onlyOwner {
         _unpause();
+    }
+    
+    /**
+     * @dev Set TurboVault address
+     * @param _turboVault Address of the TurboVault contract
+     */
+    function setTurboVault(address _turboVault) external onlyOwner {
+        require(_turboVault != address(0), "Invalid TurboVault address");
+        turboVault = _turboVault;
     }
     
     /**

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { WagmiProvider, http, createConfig } from 'wagmi';
 import { mainnet, sepolia, localhost } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -8,7 +9,7 @@ import './App.css';
 import Header from './components/Header';
 import TransactionForm from './components/TransactionForm';
 import BalanceCard from './components/BalanceCard';
-import YieldTester from './components/YieldTester';
+import TestingPage from './pages/TestingPage';
 import { Web3Provider } from './contexts/Web3Context';
 
 // Create a localhost chain configuration
@@ -52,60 +53,39 @@ const config = createConfig({
 
 const queryClient = new QueryClient();
 
-function App() {
-  const [isTestingToolsOpen, setIsTestingToolsOpen] = useState(false);
+// Main App Component
+const MainApp: React.FC = () => {
+  return (
+    <div className="app-container">
+      {/* Animated background */}
+      <div className="animated-bg"></div>
+      
+      <Header />
+      
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <div className="space-y-6">
+          {/* Main Content - User Actions */}
+          <div className="space-y-6">
+            <BalanceCard />
+            <TransactionForm />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
 
+function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <Web3Provider>
-          <div className="app-container">
-          {/* Animated background */}
-          <div className="animated-bg"></div>
-          
-          <Header onToggleTestingTools={() => setIsTestingToolsOpen(!isTestingToolsOpen)} />
-          
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-              {/* Main Content - User Actions */}
-              <div className="space-y-6">
-                <BalanceCard />
-                <TransactionForm />
-              </div>
-            </div>
-          </main>
-
-          {/* Testing Tools Sidebar */}
-          <div className={`fixed right-0 top-0 h-full w-full sm:w-80 bg-black/90 backdrop-blur-xl border-l border-vodl-500/20 transform transition-transform duration-300 ease-in-out z-50 ${
-            isTestingToolsOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}>
-            <div className="p-6 h-full overflow-y-auto testing-tools-sidebar">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <div className="strategy-icon icon-bg-indigo">
-                    <i className="fas fa-flask icon-text-indigo text-xl"></i>
-                  </div>
-                  <h3 className="text-xl font-bold text-white ml-4">Testing Tools</h3>
-                </div>
-                <button
-                  onClick={() => setIsTestingToolsOpen(false)}
-                  className="text-gray-400 hover:text-white transition-colors p-2"
-                >
-                  <i className="fas fa-times text-xl"></i>
-                </button>
-              </div>
-              <YieldTester />
-            </div>
-          </div>
-
-          {/* Overlay for mobile */}
-          {isTestingToolsOpen && (
-            <div 
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-              onClick={() => setIsTestingToolsOpen(false)}
-            />
-          )}
-          </div>
+          <Router>
+            <Routes>
+              <Route path="/" element={<MainApp />} />
+              <Route path="/simulation" element={<TestingPage />} />
+            </Routes>
+          </Router>
         </Web3Provider>
       </QueryClientProvider>
     </WagmiProvider>
