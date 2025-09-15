@@ -4,6 +4,10 @@
   "description": "Vodling Protocol - Principal Protected ETH Staking",
   "scripts": {
     "start": "./start.sh",
+    "start:blockchain": "./bootstrap/start-blockchain.sh",
+    "deploy": "./bootstrap/deploy-contracts.sh",
+    "stop:blockchain": "./bootstrap/stop-blockchain.sh",
+    "dev": "npm run start:blockchain && npm run deploy && npm start",
     "build": "forge build",
     "test": "forge test",
     "test:verbose": "forge test -vvv",

@@ -53,6 +53,6 @@ contract DeployLocalScript is Script {
         console.log("MockChainlinkOracle:", address(mockPriceFeed));
         console.log("SafeVault:", address(safeVault));
         console.log("\nContracts deployed successfully!");
-        console.log("Run 'node setup/update-contracts.js' to update frontend config automatically.");
+        console.log("Contract addresses will be updated automatically in the frontend config.");
     }
 }

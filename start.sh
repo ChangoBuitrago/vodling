@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# Vodling Protocol - Single Command Startup Script
+# Vodling Protocol - Complete Startup Script
 # This script handles everything needed to get the project running
 
 set -e
-
-echo "🚀 Starting Vodling Protocol..."
-echo "=================================="
 
 # Colors for output
 RED='\033[0;31m'
@@ -15,7 +12,6 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to print colored output
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -24,12 +20,12 @@ print_success() {
     echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 # Check if required tools are installed
@@ -124,7 +120,6 @@ deploy_contracts() {
 update_frontend() {
     print_status "Updating frontend contract addresses..."
     
-    # Create the update script inline to avoid dependency on setup/ directory
     node -e "
 const fs = require('fs');
 const path = require('path');
@@ -210,7 +205,8 @@ start_frontend() {
     
     cd frontend
     print_success "Frontend starting at http://localhost:3000"
-    print_status "The frontend will open automatically in your browser"
+    print_warning "Press Ctrl+C to stop all services"
+    echo
     
     # Start the frontend (this will block)
     npm start
@@ -239,8 +235,8 @@ trap cleanup EXIT
 
 # Main execution
 main() {
-    echo
-    print_status "Starting Vodling Protocol setup..."
+    echo "🚀 Starting Vodling Protocol..."
+    echo "==============================="
     echo
     
     check_dependencies
@@ -255,8 +251,6 @@ main() {
     print_status "Your Vodling Protocol is now running:"
     echo "  • Local blockchain: http://localhost:8545"
     echo "  • Frontend: http://localhost:3000"
-    echo
-    print_warning "Press Ctrl+C to stop all services"
     echo
     
     start_frontend
