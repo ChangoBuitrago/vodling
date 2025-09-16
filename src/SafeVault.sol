@@ -41,6 +41,8 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     /// @dev Mapping of user address to their stETH shares at deposit time
     mapping(address => uint256) public userStETHShares;
     
+    /// @dev Mapping to track how many yield shares each user has withdrawn
+    mapping(address => uint256) public withdrawnYieldShares;
     
     /// @dev Minimum deposit amount (in wei)
     uint256 public minDeposit = 0.001 ether;
@@ -58,6 +60,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     event WithdrawTotal(address indexed user, uint256 amount, uint256 stETHShares);
     event LimitsUpdated(uint256 minDeposit, uint256 maxDeposit);
     event YieldHarvested(uint256 timestamp, uint256 yieldAmount);
+    event YieldClaimed(address indexed user, uint256 amount);
     
     // ============ Errors ============
     
@@ -168,6 +171,50 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         if (!success) revert TransferFailed();
         
         emit WithdrawTotal(msg.sender, actualEthAmount, sharesToWithdraw);
+    }
+    
+    /**
+     * @dev Allows a user to claim their proportional share of the accumulated rewards.
+     * This includes both Lido rewards and EigenLayer rewards that have been earned.
+     * @return claimedAmount The amount of TurboVault shares transferred to the user.
+     */
+    function claimYieldShares() external nonReentrant whenNotPaused returns (uint256 claimedAmount) {
+        // Get the user's principal deposit and the total principal in the vault
+        uint256 userPrincipal = principalBalance[msg.sender];
+        uint256 totalPrincipalAmount = totalPrincipal;
+
+        require(userPrincipal > 0, "No principal deposited");
+        require(turboVault != address(0), "TurboVault not set");
+
+        // Get the total value of all rewards (Lido + EigenLayer) that users are entitled to
+        // This is the total value of TurboVault shares that SafeVault holds
+        uint256 totalRewardsValue = ITurboVault(turboVault).convertToAssets(
+            ITurboVault(turboVault).balanceOf(address(this))
+        );
+
+        // Calculate the user's total entitlement based on their share of the principal
+        // (userPrincipal * totalRewardsValue) / totalPrincipal
+        uint256 totalEntitlement = (userPrincipal * totalRewardsValue) / totalPrincipalAmount;
+
+        // Calculate how many TurboVault shares this entitlement represents
+        uint256 totalEntitlementShares = ITurboVault(turboVault).convertToShares(totalEntitlement);
+
+        // Calculate how many shares are available to be claimed right now
+        // This is their total entitlement minus what they've already withdrawn
+        claimedAmount = totalEntitlementShares - withdrawnYieldShares[msg.sender];
+        require(claimedAmount > 0, "No new yield shares to claim");
+
+        // Update the user's withdrawal record BEFORE the transfer to prevent re-entrancy
+        withdrawnYieldShares[msg.sender] += claimedAmount;
+
+        // Transfer the TurboVault shares from this contract to the user
+        bool success = ITurboVault(turboVault).transfer(msg.sender, claimedAmount);
+        require(success, "Share transfer failed");
+
+        // Emit the event
+        emit YieldClaimed(msg.sender, claimedAmount);
+
+        return claimedAmount;
     }
     
     /**
@@ -291,6 +338,37 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     function getUserActualWithdrawableBalance(address user) external view returns (uint256) {
         if (userStETHShares[user] == 0) return 0;
         return lido.getPooledEthByShares(userStETHShares[user]);
+    }
+    
+    /**
+     * @dev Get user's claimable yield shares from TurboVault
+     * This includes both Lido rewards and EigenLayer rewards
+     * @param user User address
+     * @return Claimable amount of TurboVault shares
+     */
+    function getClaimableYieldShares(address user) external view returns (uint256) {
+        uint256 userPrincipal = principalBalance[user];
+        if (userPrincipal == 0 || turboVault == address(0)) return 0;
+        
+        uint256 totalPrincipalAmount = totalPrincipal;
+        
+        // Get the total value of all rewards (Lido + EigenLayer) that users are entitled to
+        uint256 totalRewardsValue = ITurboVault(turboVault).convertToAssets(
+            ITurboVault(turboVault).balanceOf(address(this))
+        );
+        
+        // Calculate the user's total entitlement based on their share of the principal
+        uint256 totalEntitlement = (userPrincipal * totalRewardsValue) / totalPrincipalAmount;
+        
+        // Calculate how many TurboVault shares this entitlement represents
+        uint256 totalEntitlementShares = ITurboVault(turboVault).convertToShares(totalEntitlement);
+        
+        // Return available shares (total entitlement minus already withdrawn)
+        if (totalEntitlementShares > withdrawnYieldShares[user]) {
+            return totalEntitlementShares - withdrawnYieldShares[user];
+        }
+        
+        return 0;
     }
     
     // ============ Admin Functions ============

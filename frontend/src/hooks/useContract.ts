@@ -1,5 +1,5 @@
 import { useChainId } from 'wagmi';
-import { SAFE_VAULT_ADDRESSES, SAFE_VAULT_ABI, MOCK_LIDO_ADDRESSES, MOCK_LIDO_ABI, TURBO_VAULT_ADDRESSES, TURBO_VAULT_ABI } from '../utils/contracts';
+import { SAFE_VAULT_ADDRESSES, SAFE_VAULT_ABI, MOCK_LIDO_ADDRESSES, MOCK_LIDO_ABI, TURBO_VAULT_ADDRESSES, TURBO_VAULT_ABI, MOCK_EIGENLAYER_ADDRESSES, MOCK_EIGENLAYER_ABI } from '../utils/contracts';
 
 export const useContract = () => {
   const chainId = useChainId();
@@ -52,13 +52,30 @@ export const useContract = () => {
     }
   };
 
+  const getMockEigenLayerAddress = () => {
+    if (!chainId) return undefined;
+    
+    switch (chainId) {
+      case 1: // Mainnet
+        return MOCK_EIGENLAYER_ADDRESSES.MAINNET;
+      case 11155111: // Sepolia
+        return MOCK_EIGENLAYER_ADDRESSES.SEPOLIA;
+      case 31337: // Local development (Anvil)
+        return MOCK_EIGENLAYER_ADDRESSES.LOCAL;
+      default:
+        return undefined;
+    }
+  };
+
   const safeVaultAddress = getContractAddress();
   const mockLidoAddress = getMockLidoAddress();
   const turboVaultAddress = getTurboVaultAddress();
+  const mockEigenLayerAddress = getMockEigenLayerAddress();
   
   // console.log('useContract - SafeVault Address:', safeVaultAddress);
   // console.log('useContract - MockLido Address:', mockLidoAddress);
   // console.log('useContract - TurboVault Address:', turboVaultAddress);
+  // console.log('useContract - MockEigenLayer Address:', mockEigenLayerAddress);
 
   const safeVaultContract = {
     address: safeVaultAddress,
@@ -75,9 +92,15 @@ export const useContract = () => {
     abi: TURBO_VAULT_ABI,
   };
 
+  const mockEigenLayerContract = {
+    address: mockEigenLayerAddress,
+    abi: MOCK_EIGENLAYER_ABI,
+  };
+
   return {
     safeVaultContract,
     mockLidoContract,
     turboVaultContract,
+    mockEigenLayerContract,
   };
 };

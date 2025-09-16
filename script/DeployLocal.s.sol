@@ -7,6 +7,7 @@ import "../src/SafeVault.sol";
 import "../src/TurboVault.sol";
 import "../src/mocks/MockLido.sol";
 import "../src/mocks/MockChainlinkOracle.sol";
+import "../src/mocks/MockEigenLayer.sol";
 
 contract DeployLocalScript is Script {
     function run() external {
@@ -28,6 +29,9 @@ contract DeployLocalScript is Script {
         
         MockChainlinkOracle mockPriceFeed = new MockChainlinkOracle();
         console.log("MockChainlinkOracle deployed at:", address(mockPriceFeed));
+        
+        MockEigenLayer mockEigenLayer = new MockEigenLayer(address(mockLido));
+        console.log("MockEigenLayer deployed at:", address(mockEigenLayer));
         
         // Deploy SafeVault with mock contracts
         console.log("\n=== Deploying SafeVault ===");
@@ -61,6 +65,11 @@ contract DeployLocalScript is Script {
         safeVault.setTurboVault(address(turboVault));
         console.log("TurboVault address set in SafeVault:", safeVault.turboVault());
         
+        // Link TurboVault with MockEigenLayer
+        console.log("\n=== Linking TurboVault with MockEigenLayer ===");
+        turboVault.setEigenLayer(address(mockEigenLayer));
+        console.log("EigenLayer address set in TurboVault:", turboVault.eigenLayer());
+        
         // Send some ETH to the mock Lido contract for testing
         payable(address(mockLido)).transfer(100 ether);
         console.log("Sent 100 ETH to MockLido for testing");
@@ -70,6 +79,7 @@ contract DeployLocalScript is Script {
         console.log("\n=== Deployment Summary ===");
         console.log("MockLido:", address(mockLido));
         console.log("MockChainlinkOracle:", address(mockPriceFeed));
+        console.log("MockEigenLayer:", address(mockEigenLayer));
         console.log("SafeVault:", address(safeVault));
         console.log("TurboVault:", address(turboVault));
         console.log("\nContracts deployed successfully!");

@@ -584,3 +584,29 @@ input[type="number"] {
   background: #f97316;
   box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
 }
+
+/* Custom scrollbar styles for flow panels */
+.flow-panels-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.flow-panels-scroll::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.3);
+  border-radius: 4px;
+}
+
+.flow-panels-scroll::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.6);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.flow-panels-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.8);
+}
+
+/* Firefox scrollbar styles */
+.flow-panels-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(75, 85, 99, 0.6) rgba(31, 41, 55, 0.3);
+}

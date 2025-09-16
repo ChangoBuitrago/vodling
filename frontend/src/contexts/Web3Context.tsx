@@ -19,11 +19,23 @@ interface TurboVaultState {
   lastUpdated: number | null;
 }
 
+interface EigenLayerState {
+  totalStaked: bigint;
+  totalValue: bigint;
+  userShares: bigint;
+  userValue: bigint;
+  userRewards: bigint;
+  isLoading: boolean;
+  lastUpdated: number | null;
+}
+
 interface Web3ContextType {
   balanceState: BalanceState;
   turboVaultState: TurboVaultState;
+  eigenLayerState: EigenLayerState;
   refreshBalance: () => Promise<void>;
   refreshTurboVault: () => Promise<void>;
+  refreshEigenLayer: () => Promise<void>;
   isRefreshing: boolean;
 }
 
@@ -35,7 +47,7 @@ interface Web3ProviderProps {
 
 export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const { address } = useAccount();
-  const { safeVaultContract, turboVaultContract } = useContract();
+  const { safeVaultContract, turboVaultContract, mockEigenLayerContract } = useContract();
   
   const [balanceState, setBalanceState] = useState<BalanceState>({
     principalBalance: 0n,
@@ -49,6 +61,16 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const [turboVaultState, setTurboVaultState] = useState<TurboVaultState>({
     totalAssets: 0n,
     totalSupply: 0n,
+    isLoading: true,
+    lastUpdated: null,
+  });
+
+  const [eigenLayerState, setEigenLayerState] = useState<EigenLayerState>({
+    totalStaked: 0n,
+    totalValue: 0n,
+    userShares: 0n,
+    userValue: 0n,
+    userRewards: 0n,
     isLoading: true,
     lastUpdated: null,
   });
@@ -110,6 +132,65 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     functionName: 'totalSupply',
     query: {
       enabled: !!turboVaultContract?.address,
+      refetchInterval: false,
+      staleTime: 0,
+    },
+  });
+
+  // EigenLayer contract read hooks
+  const { data: eigenLayerTotalStaked = 0n, refetch: refetchEigenLayerTotalStaked } = useContractRead({
+    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
+    abi: mockEigenLayerContract?.abi,
+    functionName: 'totalStaked',
+    query: {
+      enabled: !!mockEigenLayerContract?.address,
+      refetchInterval: false,
+      staleTime: 0,
+    },
+  });
+
+  const { data: eigenLayerTotalValue = 0n, refetch: refetchEigenLayerTotalValue } = useContractRead({
+    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
+    abi: mockEigenLayerContract?.abi,
+    functionName: 'getTotalValue',
+    query: {
+      enabled: !!mockEigenLayerContract?.address,
+      refetchInterval: false,
+      staleTime: 0,
+    },
+  });
+
+  const { data: eigenLayerUserShares = 0n, refetch: refetchEigenLayerUserShares } = useContractRead({
+    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
+    abi: mockEigenLayerContract?.abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!mockEigenLayerContract?.address && !!address,
+      refetchInterval: false,
+      staleTime: 0,
+    },
+  });
+
+  const { data: eigenLayerUserValue = 0n, refetch: refetchEigenLayerUserValue } = useContractRead({
+    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
+    abi: mockEigenLayerContract?.abi,
+    functionName: 'getUserValue',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!mockEigenLayerContract?.address && !!address,
+      refetchInterval: false,
+      staleTime: 0,
+    },
+  });
+
+  const { data: eigenLayerUserRewards = 0n, refetch: refetchEigenLayerUserRewards } = useContractRead({
+    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
+    abi: mockEigenLayerContract?.abi,
+    functionName: 'getUserRewards',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!mockEigenLayerContract?.address && !!address,
       refetchInterval: false,
       staleTime: 0,
     },
@@ -178,6 +259,45 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     console.log(`  - Total Assets: ${formatEther(assets)} ETH`);
     console.log(`  - Total Supply: ${formatEther(supply)} shares`);
   }, [turboVaultTotalAssets, turboVaultTotalSupply, turboVaultContract?.address]);
+
+  // Update EigenLayer state when contract data changes
+  React.useEffect(() => {
+    if (!mockEigenLayerContract?.address) {
+      setEigenLayerState({
+        totalStaked: 0n,
+        totalValue: 0n,
+        userShares: 0n,
+        userValue: 0n,
+        userRewards: 0n,
+        isLoading: true,
+        lastUpdated: null,
+      });
+      return;
+    }
+
+    const totalStaked = eigenLayerTotalStaked as bigint;
+    const totalValue = eigenLayerTotalValue as bigint;
+    const userShares = eigenLayerUserShares as bigint;
+    const userValue = eigenLayerUserValue as bigint;
+    const userRewards = eigenLayerUserRewards as bigint;
+
+    setEigenLayerState({
+      totalStaked,
+      totalValue,
+      userShares,
+      userValue,
+      userRewards,
+      isLoading: false,
+      lastUpdated: Date.now(),
+    });
+
+    console.log('🔄 Web3Context: EigenLayer state updated');
+    console.log(`  - Total Staked: ${formatEther(totalStaked)} ETH`);
+    console.log(`  - Total Value: ${formatEther(totalValue)} ETH`);
+    console.log(`  - User Shares: ${formatEther(userShares)} shares`);
+    console.log(`  - User Value: ${formatEther(userValue)} ETH`);
+    console.log(`  - User Rewards: ${formatEther(userRewards)} ETH`);
+  }, [eigenLayerTotalStaked, eigenLayerTotalValue, eigenLayerUserShares, eigenLayerUserValue, eigenLayerUserRewards, mockEigenLayerContract?.address]);
 
   // Function to manually refresh balance data
   const refreshBalance = useCallback(async () => {
@@ -264,11 +384,63 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     }
   }, [turboVaultContract?.address, refetchTurboVaultAssets, refetchTurboVaultSupply]);
 
+  // Function to manually refresh EigenLayer data
+  const refreshEigenLayer = useCallback(async () => {
+    if (!mockEigenLayerContract?.address) {
+      console.log('⚠️ Cannot refresh EigenLayer: missing contract');
+      return;
+    }
+
+    setIsRefreshing(true);
+    console.log('🔄 Web3Context: Manually refreshing EigenLayer data...');
+
+    try {
+      const results = await Promise.all([
+        refetchEigenLayerTotalStaked(),
+        refetchEigenLayerTotalValue(),
+        refetchEigenLayerUserShares(),
+        refetchEigenLayerUserValue(),
+        refetchEigenLayerUserRewards(),
+      ]);
+
+      const newTotalStaked = results[0]?.data as bigint;
+      const newTotalValue = results[1]?.data as bigint;
+      const newUserShares = results[2]?.data as bigint;
+      const newUserValue = results[3]?.data as bigint;
+      const newUserRewards = results[4]?.data as bigint;
+
+      console.log('✅ Web3Context: EigenLayer refresh completed');
+      console.log(`  - New Total Staked: ${formatEther(newTotalStaked || 0n)} ETH`);
+      console.log(`  - New Total Value: ${formatEther(newTotalValue || 0n)} ETH`);
+      console.log(`  - New User Shares: ${formatEther(newUserShares || 0n)} shares`);
+      console.log(`  - New User Value: ${formatEther(newUserValue || 0n)} ETH`);
+      console.log(`  - New User Rewards: ${formatEther(newUserRewards || 0n)} ETH`);
+
+      // Update state with new data
+      setEigenLayerState(prev => ({
+        ...prev,
+        totalStaked: newTotalStaked || 0n,
+        totalValue: newTotalValue || 0n,
+        userShares: newUserShares || 0n,
+        userValue: newUserValue || 0n,
+        userRewards: newUserRewards || 0n,
+        lastUpdated: Date.now(),
+      }));
+
+    } catch (error) {
+      console.error('❌ Web3Context: Error refreshing EigenLayer:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [mockEigenLayerContract?.address, refetchEigenLayerTotalStaked, refetchEigenLayerTotalValue, refetchEigenLayerUserShares, refetchEigenLayerUserValue, refetchEigenLayerUserRewards]);
+
   const contextValue: Web3ContextType = {
     balanceState,
     turboVaultState,
+    eigenLayerState,
     refreshBalance,
     refreshTurboVault,
+    refreshEigenLayer,
     isRefreshing,
   };
 

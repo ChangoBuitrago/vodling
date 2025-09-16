@@ -21,12 +21,20 @@ interface VaultMetrics {
     totalStETHMinted: string;
     exchangeRate: string;
   };
+  eigenLayer: {
+    totalStaked: string;
+    totalValue: string;
+    userShares: string;
+    userValue: string;
+    userRewards: string;
+    restakingEfficiency: string;
+  };
 }
 
 const Dashboard: React.FC = () => {
   const { address } = useAccount();
   const { safeVaultContract, mockLidoContract } = useContract();
-  const { turboVaultState } = useWeb3Context();
+  const { turboVaultState, eigenLayerState } = useWeb3Context();
   const [metrics, setMetrics] = useState<VaultMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -81,6 +89,14 @@ const Dashboard: React.FC = () => {
           totalETHStaked: '0.0',
           totalStETHMinted: '0.0',
           exchangeRate: '1.0',
+        },
+        eigenLayer: {
+          totalStaked: '0.0',
+          totalValue: '0.0',
+          userShares: '0.0',
+          userValue: '0.0',
+          userRewards: '0.0',
+          restakingEfficiency: '0.0000',
         }
       });
     }
@@ -180,6 +196,26 @@ const Dashboard: React.FC = () => {
     console.log(`  - Compounding Efficiency: ${compoundingEfficiency}%`);
     console.log(`  - Calculation: (${valuePerShare} - 1.0) × 100 = ${compoundingEfficiency}%`);
 
+    // EigenLayer calculations
+    const totalStaked = formatEther(eigenLayerState.totalStaked);
+    const totalValue = formatEther(eigenLayerState.totalValue);
+    const userShares = formatEther(eigenLayerState.userShares);
+    const userValue = formatEther(eigenLayerState.userValue);
+    const userRewards = formatEther(eigenLayerState.userRewards);
+    
+    // Calculate restaking efficiency: (totalValue - totalStaked) / totalStaked * 100
+    const restakingEfficiency = parseFloat(totalStaked) > 0 
+      ? (((parseFloat(totalValue) - parseFloat(totalStaked)) / parseFloat(totalStaked)) * 100).toFixed(4)
+      : '0.0000';
+
+    console.log('Dashboard - EigenLayer Restaking Efficiency Calculation:');
+    console.log(`  - Total Staked: ${totalStaked} ETH`);
+    console.log(`  - Total Value: ${totalValue} ETH`);
+    console.log(`  - User Shares: ${userShares} shares`);
+    console.log(`  - User Value: ${userValue} ETH`);
+    console.log(`  - User Rewards: ${userRewards} ETH`);
+    console.log(`  - Restaking Efficiency: ${restakingEfficiency}%`);
+
     setMetrics(prev => ({
       safeVault: {
         principalDeposited,
@@ -196,17 +232,25 @@ const Dashboard: React.FC = () => {
         totalETHStaked,
         totalStETHMinted,
         exchangeRate,
+      },
+      eigenLayer: {
+        totalStaked,
+        totalValue,
+        userShares,
+        userValue,
+        userRewards,
+        restakingEfficiency,
       }
     }));
     setLastUpdated(new Date());
     setIsLoading(false);
-  }, [safeVaultTotalDeposits, safeVaultTotalYield, safeVaultStETHShares, turboVaultState, mockLidoTotalSupply, mockLidoPooledETH]);
+  }, [safeVaultTotalDeposits, safeVaultTotalYield, safeVaultStETHShares, turboVaultState, eigenLayerState, mockLidoTotalSupply, mockLidoPooledETH]);
 
   // Show refreshing indicator when any data is being fetched
   useEffect(() => {
-    const isAnyLoading = !safeVaultTotalDeposits || !safeVaultTotalYield || !mockLidoTotalSupply || turboVaultState.isLoading;
+    const isAnyLoading = !safeVaultTotalDeposits || !safeVaultTotalYield || !mockLidoTotalSupply || turboVaultState.isLoading || eigenLayerState.isLoading;
     setIsRefreshing(isAnyLoading);
-  }, [safeVaultTotalDeposits, safeVaultTotalYield, mockLidoTotalSupply, turboVaultState.isLoading]);
+  }, [safeVaultTotalDeposits, safeVaultTotalYield, mockLidoTotalSupply, turboVaultState.isLoading, eigenLayerState.isLoading]);
 
   if (!address) {
     return (
@@ -245,10 +289,10 @@ const Dashboard: React.FC = () => {
       {/* System Health Summary */}
       <div className="mb-6 pb-4 border-b border-gray-700">
         <div className="text-center">
-          <div className="text-xs text-gray-400 font-mono mb-2">SYSTEM HEALTH INDICATORS</div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+          <div className="text-xs text-gray-400 font-mono mb-2">PRINCIPAL PROTECTION + REWARD OPTIMIZATION</div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-mono">
             <div className="bg-gray-800/30 rounded p-3">
-              <div className="text-gray-400 mb-1">Yield Generation Rate</div>
+              <div className="text-gray-400 mb-1">Lido Yield Rate</div>
               <div className="text-green-400 text-sm font-bold">
                 {metrics?.mockLido.exchangeRate && parseFloat(metrics.mockLido.exchangeRate) > 1.0
                   ? `${((parseFloat(metrics.mockLido.exchangeRate) - 1) * 100).toFixed(4)}%`
@@ -261,23 +305,29 @@ const Dashboard: React.FC = () => {
               <div className="text-yellow-400 text-sm font-bold">{metrics?.safeVault.pendingHarvest} ETH</div>
             </div>
             <div className="bg-gray-800/30 rounded p-3">
-              <div className="text-gray-400 mb-1">Compounding Efficiency</div>
+              <div className="text-gray-400 mb-1">TurboVault Efficiency</div>
               <div className="text-purple-400 text-sm font-bold">
                 {metrics?.turboVault.compoundingEfficiency || '0.0000'}%
+              </div>
+            </div>
+            <div className="bg-gray-800/30 rounded p-3">
+              <div className="text-gray-400 mb-1">EigenLayer Efficiency</div>
+              <div className="text-indigo-400 text-sm font-bold">
+                {metrics?.eigenLayer.restakingEfficiency || '0.0000'}%
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Value Flow Visualization - Centered */}
-      <div className="flex justify-center pb-4">
-        <div className="flex space-x-4">
+      {/* Value Flow Visualization - Scrollable */}
+      <div className="pb-4">
+        <div className="flex space-x-4 overflow-x-auto flow-panels-scroll pb-2 px-2">
           {/* SafeVault Panel */}
-          <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-3 w-[380px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-3 w-[380px] min-w-[380px] flex-shrink-0">
             <div className="mb-2">
               <h4 className="text-sm font-mono text-blue-300 font-semibold mb-1">SAFEVAULT</h4>
-              <div className="text-xs text-gray-400 font-mono">User Deposits & Yield Aggregation</div>
+              <div className="text-xs text-gray-400 font-mono">Principal Protection + Reward Harvesting</div>
             </div>
             <div className="space-y-1 text-sm font-mono">
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
@@ -304,7 +354,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* MockLido Panel */}
-          <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-lg p-3 w-[380px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-lg p-3 w-[380px] min-w-[380px] flex-shrink-0">
             <div className="mb-2">
               <h4 className="text-sm font-mono text-cyan-300 font-semibold mb-1">MOCKLIDO</h4>
               <div className="text-xs text-gray-400 font-mono">The Staking Engine</div>
@@ -334,10 +384,10 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* TurboVault Panel */}
-          <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-lg p-3 w-[380px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-lg p-3 w-[380px] min-w-[380px] flex-shrink-0">
             <div className="mb-2">
               <h4 className="text-sm font-mono text-purple-300 font-semibold mb-1">TURBOVAULT</h4>
-              <div className="text-xs text-gray-400 font-mono">The Compounding Engine</div>
+              <div className="text-xs text-gray-400 font-mono">Reward Pool + EigenLayer Gateway</div>
             </div>
             <div className="space-y-1 text-sm font-mono">
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
@@ -357,6 +407,55 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Flow Connector */}
+          <div className="flex items-center justify-center min-w-[40px]">
+            <div className="flow-connector"></div>
+          </div>
+
+          {/* EigenLayer Panel */}
+          <div className="bg-gradient-to-r from-indigo-900/20 to-indigo-800/20 border border-indigo-500/30 rounded-lg p-3 w-[380px] min-w-[380px] flex-shrink-0">
+            <div className="mb-2">
+              <h4 className="text-sm font-mono text-indigo-300 font-semibold mb-1">EIGENLAYER</h4>
+              <div className="text-xs text-gray-400 font-mono">Admin-managed Restaking</div>
+            </div>
+            <div className="space-y-1 text-sm font-mono">
+              <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
+                <span className="text-gray-400">Total Staked</span>
+                <span className="text-white font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalStaked, ' ETH')}</span>
+              </div>
+              <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
+                <span className="text-gray-400">User Shares</span>
+                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userShares, '')}</span>
+              </div>
+              <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
+                <span className="text-gray-400">User Value</span>
+                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userValue, ' ETH')}</span>
+              </div>
+              <div className="bg-gradient-to-r from-pink-900/30 to-pink-800/30 border border-pink-500/40 rounded p-3 flex justify-between items-center">
+                <div className="flex items-center whitespace-nowrap">
+                  <div className="kpi-indicator efficiency mr-2"></div>
+                  <span className="text-pink-300">User Rewards</span>
+                </div>
+                <span className="text-pink-200 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userRewards, ' ETH')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Flow Description */}
+      <div className="mt-6 p-4 bg-gray-800/30 border border-gray-600 rounded-lg">
+        <div className="text-xs text-gray-400 font-mono mb-2">CORRECT YIELD FLOW ARCHITECTURE</div>
+        <div className="text-sm text-gray-300 font-mono leading-relaxed">
+          <p className="mb-2">
+            <span className="text-blue-400">SafeVault</span> protects user principal in Lido (never touched) while harvesting Lido rewards to <span className="text-purple-400">TurboVault</span>. 
+            <span className="text-purple-400">TurboVault</span> serves as a shared reward pool that can be restaked to <span className="text-indigo-400">EigenLayer</span> by admin for additional yield. 
+            Users claim their proportional share of the combined (Lido + EigenLayer) rewards.
+          </p>
+          <p>
+            <span className="text-yellow-400">Key:</span> Principal stays protected in Lido → Only rewards flow through the system → Users get the sum of all rewards.
+          </p>
         </div>
       </div>
     </div>

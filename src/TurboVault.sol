@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./interfaces/IEigenLayer.sol";
 
 /**
  * @title TurboVault
@@ -14,9 +15,22 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     
+    // ============ State Variables ============
+    
+    /// @dev EigenLayer contract address for restaking
+    address public eigenLayer;
+    
+    
+    /// @dev Pause functionality for EigenLayer operations
+    bool public eigenLayerPaused;
+    
     // ============ Events ============
     
     event YieldDeposited(address indexed from, uint256 amount, uint256 shares);
+    event RestakedToEigenLayer(address indexed user, uint256 amount, uint256 shares);
+    event WithdrawnFromEigenLayer(address indexed user, uint256 stETHAmount, uint256 turboVaultShares);
+    event EigenLayerSet(address indexed eigenLayer);
+    event EigenLayerPaused(bool paused);
     
     // ============ Constructor ============
     
@@ -39,8 +53,8 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
         // Calculate shares to mint
         shares = convertToShares(amount);
         
-        // Transfer stETH from caller (SafeVault) to this contract and mint shares
-        _deposit(msg.sender, address(this), amount, shares);
+        // Transfer stETH from caller (SafeVault) to this contract and mint shares to caller
+        _deposit(msg.sender, msg.sender, amount, shares);
         
         emit YieldDeposited(msg.sender, amount, shares);
         
@@ -63,5 +77,77 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
      */
     function asset() public view override returns (address) {
         return super.asset();
+    }
+    
+    // ============ EigenLayer Functions ============
+    
+    /**
+     * @dev Set EigenLayer contract address
+     * @param _eigenLayer EigenLayer contract address
+     */
+    function setEigenLayer(address _eigenLayer) external onlyOwner {
+        require(_eigenLayer != address(0), "Invalid EigenLayer address");
+        eigenLayer = _eigenLayer;
+        emit EigenLayerSet(_eigenLayer);
+    }
+    
+    /**
+     * @dev Pause or unpause EigenLayer operations
+     * @param _paused True to pause, false to unpause
+     */
+    function setEigenLayerPaused(bool _paused) external onlyOwner {
+        eigenLayerPaused = _paused;
+        emit EigenLayerPaused(_paused);
+    }
+    
+    /**
+     * @dev Restake TurboVault assets to EigenLayer (admin only)
+     * This function allows the vault to restake its assets to EigenLayer for the benefit of all users
+     * @param stETHAmount Amount of stETH to restake
+     * @return eigenLayerShares Number of EigenLayer shares received
+     */
+    function restakeToEigenLayer(uint256 stETHAmount) external onlyOwner nonReentrant returns (uint256 eigenLayerShares) {
+        require(stETHAmount > 0, "Amount must be greater than 0");
+        require(eigenLayer != address(0), "EigenLayer not set");
+        require(!eigenLayerPaused, "EigenLayer operations paused");
+        require(IERC20(asset()).balanceOf(address(this)) >= stETHAmount, "Insufficient stETH balance");
+        
+        // Approve EigenLayer to spend stETH
+        IERC20(asset()).approve(eigenLayer, stETHAmount);
+        
+        // Stake to EigenLayer
+        eigenLayerShares = IEigenLayer(eigenLayer).stake(stETHAmount);
+        
+        emit RestakedToEigenLayer(address(this), stETHAmount, eigenLayerShares);
+        
+        return eigenLayerShares;
+    }
+    
+    /**
+     * @dev Withdraw from EigenLayer back to TurboVault (admin only)
+     * This completes the lifecycle and keeps funds within the Vodling ecosystem
+     * @param eigenLayerShares Number of EigenLayer shares to withdraw
+     * @return stETHAmount Amount of stETH received
+     */
+    function withdrawFromEigenLayer(uint256 eigenLayerShares) external onlyOwner nonReentrant returns (uint256 stETHAmount) {
+        require(eigenLayerShares > 0, "Shares must be greater than 0");
+        require(eigenLayer != address(0), "EigenLayer not set");
+        require(!eigenLayerPaused, "EigenLayer operations paused");
+        
+        // Unstake from EigenLayer (this will transfer stETH back to this contract)
+        stETHAmount = IEigenLayer(eigenLayer).unstake(eigenLayerShares);
+        require(stETHAmount > 0, "No value to withdraw");
+        
+        emit WithdrawnFromEigenLayer(address(this), stETHAmount, eigenLayerShares);
+        
+        return stETHAmount;
+    }
+    
+    
+    // ============ Modifiers ============
+    
+    modifier whenEigenLayerNotPaused() {
+        require(!eigenLayerPaused, "EigenLayer operations paused");
+        _;
     }
 }

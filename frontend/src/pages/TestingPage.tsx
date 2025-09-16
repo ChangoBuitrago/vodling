@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import TestingTools from '../components/TestingTools';
 import Dashboard from '../components/Dashboard';
+import ClaimYield from '../components/ClaimYield';
 
 const TestingPage: React.FC = () => {
   return (
@@ -34,13 +35,18 @@ const TestingPage: React.FC = () => {
         <div className="mb-4">
           <h2 className="text-sm font-mono text-gray-400 mb-1">YIELD SIMULATION ENVIRONMENT</h2>
           <p className="text-xs text-gray-500 font-mono">
-            SafeVault + TurboVault workflow simulation • Time acceleration • Yield harvesting
+            Principal Protection + Reward Optimization • Lido → TurboVault → EigenLayer • Admin-managed restaking
           </p>
         </div>
         
         {/* Dashboard */}
         <div className="mb-6">
           <Dashboard />
+        </div>
+        
+        {/* Claim Yield Component */}
+        <div className="mb-6">
+          <ClaimYield />
         </div>
         
         <TestingTools />
