@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAccount, useWatchContractEvent, useWriteContract, useWaitForTransactionReceipt, useBlockNumber } from 'wagmi';
 import { useContract } from '../hooks/useContract';
+import { useWeb3Context } from '../contexts/Web3Context';
 import { formatEther } from 'ethers';
 
 interface LogEntry {
@@ -16,6 +17,7 @@ interface LogEntry {
 const TestingTools: React.FC = () => {
   const { address } = useAccount();
   const { safeVaultContract, mockLidoContract } = useContract();
+  const { refreshTurboVault } = useWeb3Context();
   const { data: blockNumber } = useBlockNumber();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isHarvesting, setIsHarvesting] = useState(false);
@@ -196,9 +198,26 @@ const TestingTools: React.FC = () => {
         message: `✅ Yield harvested to TurboVault - TX: ${harvestTxHash.slice(0, 10)}...`,
         data: { transactionHash: harvestTxHash }
       });
+      
+      // Refresh TurboVault data to update the Dashboard
+      refreshTurboVault().then(() => {
+        addLogEntry({
+          type: 'test_action',
+          message: '🔄 Dashboard data refreshed',
+          data: { action: 'dashboard_refresh' }
+        });
+      }).catch((error) => {
+        console.error('Error refreshing TurboVault data:', error);
+        addLogEntry({
+          type: 'error',
+          message: `Failed to refresh Dashboard: ${error}`,
+          data: { error: true }
+        });
+      });
+      
       setIsHarvesting(false);
     }
-  }, [harvestTxHash, isHarvestConfirming, isHarvestPending, addLogEntry]);
+  }, [harvestTxHash, isHarvestConfirming, isHarvestPending, addLogEntry, refreshTurboVault]);
 
   // Timeout mechanism to prevent harvest from getting stuck
   useEffect(() => {

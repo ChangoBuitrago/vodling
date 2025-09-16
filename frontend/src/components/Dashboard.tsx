@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { useContract } from '../hooks/useContract';
+import { useWeb3Context } from '../contexts/Web3Context';
 import { formatEther } from 'ethers';
 
 interface VaultMetrics {
@@ -13,6 +14,7 @@ interface VaultMetrics {
     compoundedYield: string;
     vaultSharesMinted: string;
     valuePerShare: string;
+    compoundingEfficiency: string;
   };
   mockLido: {
     totalETHStaked: string;
@@ -23,7 +25,8 @@ interface VaultMetrics {
 
 const Dashboard: React.FC = () => {
   const { address } = useAccount();
-  const { safeVaultContract, mockLidoContract, turboVaultContract } = useContract();
+  const { safeVaultContract, mockLidoContract } = useContract();
+  const { turboVaultState } = useWeb3Context();
   const [metrics, setMetrics] = useState<VaultMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -72,6 +75,7 @@ const Dashboard: React.FC = () => {
           compoundedYield: '0.0',
           vaultSharesMinted: '0.0',
           valuePerShare: '1.0',
+          compoundingEfficiency: '0.0000',
         },
         mockLido: {
           totalETHStaked: '0.0',
@@ -105,38 +109,13 @@ const Dashboard: React.FC = () => {
     query: { enabled: !!safeVaultContract?.address && !!address, refetchInterval: 2000 }
   });
 
-  // Read TurboVault metrics
-  const { data: turboVaultTotalAssets, error: turboVaultAssetsError } = useReadContract({
-    address: turboVaultContract?.address as `0x${string}` | undefined,
-    abi: turboVaultContract?.abi,
-    functionName: 'totalAssets',
-    query: { enabled: !!turboVaultContract?.address, refetchInterval: 2000 }
-  });
-
-  const { data: turboVaultTotalSupply, error: turboVaultSupplyError } = useReadContract({
-    address: turboVaultContract?.address as `0x${string}` | undefined,
-    abi: turboVaultContract?.abi,
-    functionName: 'totalSupply',
-    query: { enabled: !!turboVaultContract?.address, refetchInterval: 2000 }
-  });
-
   // Debug logging for TurboVault
   useEffect(() => {
     console.log('Dashboard - TurboVault Debug:', {
-      address: turboVaultContract?.address,
-      totalAssets: turboVaultTotalAssets,
-      totalSupply: turboVaultTotalSupply,
-      assetsError: turboVaultAssetsError,
-      supplyError: turboVaultSupplyError
+      turboVaultState,
+      isLoading: turboVaultState.isLoading
     });
-    
-    if (turboVaultAssetsError) {
-      console.error('TurboVault totalAssets error:', turboVaultAssetsError);
-    }
-    if (turboVaultSupplyError) {
-      console.error('TurboVault totalSupply error:', turboVaultSupplyError);
-    }
-  }, [turboVaultContract?.address, turboVaultTotalAssets, turboVaultTotalSupply, turboVaultAssetsError, turboVaultSupplyError]);
+  }, [turboVaultState]);
 
   // Read MockLido metrics
   const { data: mockLidoTotalSupply } = useReadContract({
@@ -160,8 +139,7 @@ const Dashboard: React.FC = () => {
       safeVaultTotalDeposits,
       safeVaultTotalYield,
       safeVaultStETHShares,
-      turboVaultTotalAssets,
-      turboVaultTotalSupply,
+      turboVaultState,
       mockLidoTotalSupply,
       mockLidoPooledETH
     });
@@ -177,11 +155,30 @@ const Dashboard: React.FC = () => {
       ? (parseFloat(totalETHStaked) / parseFloat(totalStETHMinted)).toFixed(6)
       : '1.000000';
 
-    const compoundedYield = formatEther(typeof turboVaultTotalAssets === 'bigint' ? turboVaultTotalAssets : 0n);
-    const vaultSharesMinted = formatEther(typeof turboVaultTotalSupply === 'bigint' ? turboVaultTotalSupply : 0n);
+    const compoundedYield = formatEther(turboVaultState.totalAssets);
+    const vaultSharesMinted = formatEther(turboVaultState.totalSupply);
+    
+    // Calculate value per share: total assets / total shares
+    // This represents the current value of each share
     const valuePerShare = vaultSharesMinted && compoundedYield && parseFloat(vaultSharesMinted) > 0
       ? (parseFloat(compoundedYield) / parseFloat(vaultSharesMinted)).toFixed(6)
       : '1.000000';
+    
+    // For compounding efficiency, we need to compare against the initial share value
+    // In ERC4626, the initial share value is 1.0 (1e18 wei = 1.0 ETH)
+    // If no shares exist yet, efficiency is 0%
+    // If shares exist, efficiency = (current_value_per_share - 1.0) * 100
+    const compoundingEfficiency = parseFloat(vaultSharesMinted) > 0 
+      ? ((parseFloat(valuePerShare) - 1.0) * 100).toFixed(4)
+      : '0.0000';
+    
+    // Debug logging for Compounding Efficiency calculation
+    console.log('Dashboard - Compounding Efficiency Calculation:');
+    console.log(`  - Total Assets: ${compoundedYield} ETH`);
+    console.log(`  - Total Supply: ${vaultSharesMinted} shares`);
+    console.log(`  - Value per Share: ${valuePerShare}`);
+    console.log(`  - Compounding Efficiency: ${compoundingEfficiency}%`);
+    console.log(`  - Calculation: (${valuePerShare} - 1.0) × 100 = ${compoundingEfficiency}%`);
 
     setMetrics(prev => ({
       safeVault: {
@@ -193,6 +190,7 @@ const Dashboard: React.FC = () => {
         compoundedYield,
         vaultSharesMinted,
         valuePerShare,
+        compoundingEfficiency,
       },
       mockLido: {
         totalETHStaked,
@@ -202,13 +200,13 @@ const Dashboard: React.FC = () => {
     }));
     setLastUpdated(new Date());
     setIsLoading(false);
-  }, [safeVaultTotalDeposits, safeVaultTotalYield, safeVaultStETHShares, turboVaultTotalAssets, turboVaultTotalSupply, mockLidoTotalSupply, mockLidoPooledETH]);
+  }, [safeVaultTotalDeposits, safeVaultTotalYield, safeVaultStETHShares, turboVaultState, mockLidoTotalSupply, mockLidoPooledETH]);
 
   // Show refreshing indicator when any data is being fetched
   useEffect(() => {
-    const isAnyLoading = !safeVaultTotalDeposits || !safeVaultTotalYield || !mockLidoTotalSupply || !turboVaultTotalAssets || !turboVaultTotalSupply;
+    const isAnyLoading = !safeVaultTotalDeposits || !safeVaultTotalYield || !mockLidoTotalSupply || turboVaultState.isLoading;
     setIsRefreshing(isAnyLoading);
-  }, [safeVaultTotalDeposits, safeVaultTotalYield, mockLidoTotalSupply, turboVaultTotalAssets, turboVaultTotalSupply]);
+  }, [safeVaultTotalDeposits, safeVaultTotalYield, mockLidoTotalSupply, turboVaultState.isLoading]);
 
   if (!address) {
     return (
@@ -265,10 +263,7 @@ const Dashboard: React.FC = () => {
             <div className="bg-gray-800/30 rounded p-3">
               <div className="text-gray-400 mb-1">Compounding Efficiency</div>
               <div className="text-purple-400 text-sm font-bold">
-                {metrics?.turboVault.valuePerShare && parseFloat(metrics.turboVault.valuePerShare) > 1.0
-                  ? `${((parseFloat(metrics.turboVault.valuePerShare) - 1) * 100).toFixed(4)}%`
-                  : '0.0000%'
-                }
+                {metrics?.turboVault.compoundingEfficiency || '0.0000'}%
               </div>
             </div>
           </div>

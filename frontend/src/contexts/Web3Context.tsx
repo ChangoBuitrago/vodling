@@ -12,9 +12,18 @@ interface BalanceState {
   lastUpdated: number | null;
 }
 
+interface TurboVaultState {
+  totalAssets: bigint;
+  totalSupply: bigint;
+  isLoading: boolean;
+  lastUpdated: number | null;
+}
+
 interface Web3ContextType {
   balanceState: BalanceState;
+  turboVaultState: TurboVaultState;
   refreshBalance: () => Promise<void>;
+  refreshTurboVault: () => Promise<void>;
   isRefreshing: boolean;
 }
 
@@ -26,13 +35,20 @@ interface Web3ProviderProps {
 
 export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const { address } = useAccount();
-  const { safeVaultContract } = useContract();
+  const { safeVaultContract, turboVaultContract } = useContract();
   
   const [balanceState, setBalanceState] = useState<BalanceState>({
     principalBalance: 0n,
     yieldBalance: 0n,
     totalBalance: 0n,
     actualWithdrawableBalance: 0n,
+    isLoading: true,
+    lastUpdated: null,
+  });
+  
+  const [turboVaultState, setTurboVaultState] = useState<TurboVaultState>({
+    totalAssets: 0n,
+    totalSupply: 0n,
     isLoading: true,
     lastUpdated: null,
   });
@@ -76,6 +92,29 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     },
   });
 
+  // TurboVault contract read hooks
+  const { data: turboVaultTotalAssets = 0n, refetch: refetchTurboVaultAssets } = useContractRead({
+    address: turboVaultContract?.address as `0x${string}` | undefined,
+    abi: turboVaultContract?.abi,
+    functionName: 'totalAssets',
+    query: {
+      enabled: !!turboVaultContract?.address,
+      refetchInterval: false,
+      staleTime: 0,
+    },
+  });
+
+  const { data: turboVaultTotalSupply = 0n, refetch: refetchTurboVaultSupply } = useContractRead({
+    address: turboVaultContract?.address as `0x${string}` | undefined,
+    abi: turboVaultContract?.abi,
+    functionName: 'totalSupply',
+    query: {
+      enabled: !!turboVaultContract?.address,
+      refetchInterval: false,
+      staleTime: 0,
+    },
+  });
+
   // Update balance state when contract data changes
   React.useEffect(() => {
     if (!address || !safeVaultContract?.address) {
@@ -112,6 +151,33 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     console.log(`  - Raw Yield Value: ${yield_.toString()} wei`);
     console.log(`  - Raw Principal Value: ${principal.toString()} wei`);
   }, [principalBalance, yieldBalance, actualWithdrawableBalance, address, safeVaultContract?.address]);
+
+  // Update TurboVault state when contract data changes
+  React.useEffect(() => {
+    if (!turboVaultContract?.address) {
+      setTurboVaultState({
+        totalAssets: 0n,
+        totalSupply: 0n,
+        isLoading: true,
+        lastUpdated: null,
+      });
+      return;
+    }
+
+    const assets = turboVaultTotalAssets as bigint;
+    const supply = turboVaultTotalSupply as bigint;
+
+    setTurboVaultState({
+      totalAssets: assets,
+      totalSupply: supply,
+      isLoading: false,
+      lastUpdated: Date.now(),
+    });
+
+    console.log('🔄 Web3Context: TurboVault state updated');
+    console.log(`  - Total Assets: ${formatEther(assets)} ETH`);
+    console.log(`  - Total Supply: ${formatEther(supply)} shares`);
+  }, [turboVaultTotalAssets, turboVaultTotalSupply, turboVaultContract?.address]);
 
   // Function to manually refresh balance data
   const refreshBalance = useCallback(async () => {
@@ -160,9 +226,49 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     }
   }, [address, safeVaultContract?.address, refetchPrincipalBalance, refetchYieldBalance, refetchActualBalance]);
 
+  // Function to manually refresh TurboVault data
+  const refreshTurboVault = useCallback(async () => {
+    if (!turboVaultContract?.address) {
+      console.log('⚠️ Cannot refresh TurboVault: missing contract');
+      return;
+    }
+
+    setIsRefreshing(true);
+    console.log('🔄 Web3Context: Manually refreshing TurboVault data...');
+
+    try {
+      const results = await Promise.all([
+        refetchTurboVaultAssets(),
+        refetchTurboVaultSupply(),
+      ]);
+
+      const newAssets = results[0]?.data as bigint;
+      const newSupply = results[1]?.data as bigint;
+
+      console.log('✅ Web3Context: TurboVault refresh completed');
+      console.log(`  - New Assets: ${formatEther(newAssets || 0n)} ETH`);
+      console.log(`  - New Supply: ${formatEther(newSupply || 0n)} shares`);
+
+      // Update state with new data
+      setTurboVaultState(prev => ({
+        ...prev,
+        totalAssets: newAssets || 0n,
+        totalSupply: newSupply || 0n,
+        lastUpdated: Date.now(),
+      }));
+
+    } catch (error) {
+      console.error('❌ Web3Context: Error refreshing TurboVault:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [turboVaultContract?.address, refetchTurboVaultAssets, refetchTurboVaultSupply]);
+
   const contextValue: Web3ContextType = {
     balanceState,
+    turboVaultState,
     refreshBalance,
+    refreshTurboVault,
     isRefreshing,
   };
 

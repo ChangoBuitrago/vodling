@@ -4,8 +4,8 @@ import { SAFE_VAULT_ADDRESSES, SAFE_VAULT_ABI, MOCK_LIDO_ADDRESSES, MOCK_LIDO_AB
 export const useContract = () => {
   const chainId = useChainId();
   
-  // Debug logging
-  console.log('useContract - Chain ID:', chainId);
+  // Debug logging (reduced frequency)
+  // console.log('useContract - Chain ID:', chainId);
 
   const getContractAddress = () => {
     if (!chainId) return undefined;
@@ -56,9 +56,9 @@ export const useContract = () => {
   const mockLidoAddress = getMockLidoAddress();
   const turboVaultAddress = getTurboVaultAddress();
   
-  console.log('useContract - SafeVault Address:', safeVaultAddress);
-  console.log('useContract - MockLido Address:', mockLidoAddress);
-  console.log('useContract - TurboVault Address:', turboVaultAddress);
+  // console.log('useContract - SafeVault Address:', safeVaultAddress);
+  // console.log('useContract - MockLido Address:', mockLidoAddress);
+  // console.log('useContract - TurboVault Address:', turboVaultAddress);
 
   const safeVaultContract = {
     address: safeVaultAddress,
