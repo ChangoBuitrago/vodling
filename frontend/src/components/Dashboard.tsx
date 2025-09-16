@@ -245,9 +245,9 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Value Flow Visualization - Horizontal Scrolling */}
-      <div className="overflow-x-auto pb-4 dashboard-scroll">
-        <div className="flex space-x-4 min-w-max">
+      {/* Value Flow Visualization - Centered */}
+      <div className="flex justify-center pb-4">
+        <div className="flex space-x-4">
           {/* SafeVault Panel */}
           <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-3 w-[280px] flex-shrink-0">
             <div className="mb-2">
