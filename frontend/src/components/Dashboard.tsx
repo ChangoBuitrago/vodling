@@ -249,27 +249,33 @@ const Dashboard: React.FC = () => {
       <div className="flex justify-center pb-4">
         <div className="flex space-x-4">
           {/* SafeVault Panel */}
-          <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-3 w-[280px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-3 w-[320px] flex-shrink-0">
             <div className="mb-2">
               <h4 className="text-sm font-mono text-blue-300 font-semibold mb-1">SAFEVAULT</h4>
               <div className="text-xs text-gray-400 font-mono">User Deposits & Yield Aggregation</div>
             </div>
             <div className="space-y-2 text-xs font-mono">
               <div className="bg-gray-800/50 rounded p-2">
-                <div className="text-gray-400 mb-1">Principal Deposited</div>
-                <div className="text-white text-lg font-bold">{metrics?.safeVault.principalDeposited} ETH</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Principal Deposited</span>
+                  <span className="text-white text-lg font-bold">{metrics?.safeVault.principalDeposited} ETH</span>
+                </div>
               </div>
               <div className="bg-gray-800/50 rounded p-2">
-                <div className="text-gray-400 mb-1">Current Holdings (stETH)</div>
-                <div className="text-blue-300 text-lg font-bold">{metrics?.safeVault.currentHoldings} ETH</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Current Holdings (stETH)</span>
+                  <span className="text-blue-300 text-lg font-bold">{metrics?.safeVault.currentHoldings} ETH</span>
+                </div>
               </div>
               <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/30 border border-yellow-500/40 rounded p-2">
-              <div className="text-yellow-300 mb-1 flex items-center">
-                <div className="kpi-indicator pending mr-2"></div>
-                PENDING HARVEST (Yield)
-              </div>
-                <div className="text-yellow-200 text-lg font-bold">{metrics?.safeVault.pendingHarvest} ETH</div>
-                <div className="text-xs text-yellow-400 mt-1">This is the value that will move to the TurboVault</div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center">
+                    <div className="kpi-indicator pending mr-2"></div>
+                    <span className="text-yellow-300">PENDING HARVEST (Yield)</span>
+                  </div>
+                  <span className="text-yellow-200 text-lg font-bold">{metrics?.safeVault.pendingHarvest} ETH</span>
+                </div>
+                <div className="text-xs text-yellow-400">This is the value that will move to the TurboVault</div>
               </div>
             </div>
           </div>
@@ -280,27 +286,33 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* MockLido Panel */}
-          <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-lg p-3 w-[280px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-lg p-3 w-[320px] flex-shrink-0">
             <div className="mb-2">
               <h4 className="text-sm font-mono text-cyan-300 font-semibold mb-1">MOCKLIDO</h4>
               <div className="text-xs text-gray-400 font-mono">The Staking Engine</div>
             </div>
             <div className="space-y-2 text-xs font-mono">
               <div className="bg-gray-800/50 rounded p-2">
-                <div className="text-gray-400 mb-1">Total ETH Staked</div>
-                <div className="text-white text-lg font-bold">{metrics?.mockLido.totalETHStaked} ETH</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Total ETH Staked</span>
+                  <span className="text-white text-lg font-bold">{metrics?.mockLido.totalETHStaked} ETH</span>
+                </div>
               </div>
               <div className="bg-gray-800/50 rounded p-2">
-                <div className="text-gray-400 mb-1">Total stETH Minted</div>
-                <div className="text-cyan-300 text-lg font-bold">{metrics?.mockLido.totalStETHMinted} stETH</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Total stETH Minted</span>
+                  <span className="text-cyan-300 text-lg font-bold">{metrics?.mockLido.totalStETHMinted} stETH</span>
+                </div>
               </div>
               <div className="bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-500/40 rounded p-2">
-              <div className="text-green-300 mb-1 flex items-center">
-                <div className="kpi-indicator active mr-2"></div>
-                Exchange Rate (stETH:ETH)
-              </div>
-                <div className="text-green-200 text-lg font-bold">{metrics?.mockLido.exchangeRate}</div>
-                <div className="text-xs text-green-400 mt-1">This is the key driver of yield</div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center">
+                    <div className="kpi-indicator active mr-2"></div>
+                    <span className="text-green-300">Exchange Rate (stETH:ETH)</span>
+                  </div>
+                  <span className="text-green-200 text-lg font-bold">{metrics?.mockLido.exchangeRate}</span>
+                </div>
+                <div className="text-xs text-green-400">This is the key driver of yield</div>
               </div>
             </div>
           </div>
@@ -311,27 +323,33 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* TurboVault Panel */}
-          <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-lg p-3 w-[280px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-lg p-3 w-[320px] flex-shrink-0">
             <div className="mb-2">
               <h4 className="text-sm font-mono text-purple-300 font-semibold mb-1">TURBOVAULT</h4>
               <div className="text-xs text-gray-400 font-mono">The Compounding Engine</div>
             </div>
             <div className="space-y-2 text-xs font-mono">
               <div className="bg-gray-800/50 rounded p-2">
-                <div className="text-gray-400 mb-1">Compounded Yield (stETH)</div>
-                <div className="text-white text-lg font-bold">{metrics?.turboVault.compoundedYield} ETH</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Compounded Yield (stETH)</span>
+                  <span className="text-white text-lg font-bold">{metrics?.turboVault.compoundedYield} ETH</span>
+                </div>
               </div>
               <div className="bg-gray-800/50 rounded p-2">
-                <div className="text-gray-400 mb-1">Vault Shares Minted</div>
-                <div className="text-purple-300 text-lg font-bold">{metrics?.turboVault.vaultSharesMinted}</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Vault Shares Minted</span>
+                  <span className="text-purple-300 text-lg font-bold">{metrics?.turboVault.vaultSharesMinted}</span>
+                </div>
               </div>
               <div className="bg-gradient-to-r from-orange-900/30 to-orange-800/30 border border-orange-500/40 rounded p-2">
-              <div className="text-orange-300 mb-1 flex items-center">
-                <div className="kpi-indicator efficiency mr-2"></div>
-                Value per Share
-              </div>
-                <div className="text-orange-200 text-lg font-bold">{metrics?.turboVault.valuePerShare}</div>
-                <div className="text-xs text-orange-400 mt-1">This will increase as the TurboVault strategy generates its own yield</div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center">
+                    <div className="kpi-indicator efficiency mr-2"></div>
+                    <span className="text-orange-300">Value per Share</span>
+                  </div>
+                  <span className="text-orange-200 text-lg font-bold">{metrics?.turboVault.valuePerShare}</span>
+                </div>
+                <div className="text-xs text-orange-400">This will increase as the TurboVault strategy generates its own yield</div>
               </div>
             </div>
           </div>
