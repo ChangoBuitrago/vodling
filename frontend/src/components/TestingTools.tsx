@@ -218,23 +218,23 @@ const TestingTools: React.FC = () => {
 
   const formatLogEntry = (log: LogEntry) => {
     const timeStr = log.timestamp.toISOString().substr(11, 12);
-    const typeColor = log.type === 'yield_harvested' ? 'text-green-400' : 
-                     log.type === 'deposit' ? 'text-blue-400' : 
-                     log.type === 'error' ? 'text-red-400' : 'text-yellow-400';
+    const typeColor = log.type === 'yield_harvested' ? 'text-green-300' : 
+                     log.type === 'deposit' ? 'text-blue-300' : 
+                     log.type === 'error' ? 'text-red-300' : 'text-yellow-300';
     
     return (
-      <div key={log.id} className="flex items-start space-x-2 p-2 bg-gray-900/50 border-l-2 border-gray-700 hover:border-gray-600 hover:bg-gray-900/70 transition-colors">
-        <div className="text-xs text-gray-500 font-mono w-14 flex-shrink-0">
+      <div key={log.id} className="flex items-start space-x-2 p-2 bg-gray-800/30 border-l-2 border-gray-600 hover:border-gray-500 hover:bg-gray-800/50 transition-colors">
+        <div className="text-xs text-gray-400 font-mono w-14 flex-shrink-0">
           {timeStr}
         </div>
-        <div className="text-xs text-gray-500 font-mono w-10 flex-shrink-0">
+        <div className="text-xs text-gray-400 font-mono w-10 flex-shrink-0">
           #{log.blockNumber}
         </div>
         <div className={`text-xs font-mono ${typeColor} flex-1 leading-relaxed`}>
           {log.message}
         </div>
         {log.txHash && (
-          <div className="text-xs text-gray-600 font-mono flex-shrink-0">
+          <div className="text-xs text-gray-500 font-mono flex-shrink-0">
             {log.txHash.slice(0, 8)}...
           </div>
         )}
@@ -256,21 +256,22 @@ const TestingTools: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-full">
       {/* Event Logger Section - Left Column (3/5 width) */}
       <div className="lg:col-span-3 bg-gray-900 border border-gray-700 rounded p-4 flex flex-col">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <h3 className="text-sm font-mono text-white">EVENT LOG</h3>
+            <h3 className="text-sm font-mono text-white font-semibold mb-1">EVENT LOG</h3>
+            <div className="text-xs text-gray-400 font-mono ml-2">Real-time Protocol Events</div>
           </div>
           <div className="flex space-x-2">
             <button
               onClick={scrollToBottom}
-              className="px-3 py-1 rounded text-xs font-mono bg-gray-600 hover:bg-gray-700 text-white transition-colors"
+              className="px-3 py-1 rounded text-xs font-mono bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
               title="Scroll to bottom"
             >
               ↓
             </button>
             <button
               onClick={clearLogs}
-              className="px-3 py-1 rounded text-xs font-mono bg-red-600 hover:bg-red-700 text-white transition-colors"
+              className="px-3 py-1 rounded text-xs font-mono bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
             >
               CLEAR
             </button>
@@ -304,13 +305,16 @@ const TestingTools: React.FC = () => {
       <div className="lg:col-span-2 flex flex-col space-y-4">
         {/* Workflow Controls */}
         <div className="bg-gray-900 border border-gray-700 rounded p-4">
-          <h3 className="text-sm font-mono text-white mb-4">WORKFLOW</h3>
+          <div className="mb-4">
+            <h3 className="text-sm font-mono text-white font-semibold mb-1">WORKFLOW</h3>
+            <div className="text-xs text-gray-400 font-mono">Generate Yield • Harvest to TurboVault</div>
+          </div>
           
           <div className="space-y-3">
             <button
               onClick={generateYield}
               disabled={!mockLidoContract?.address || isFastForwardPending}
-              className="w-full px-4 py-3 rounded text-sm font-mono bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white transition-colors"
+              className="w-full px-4 py-3 rounded text-sm font-mono bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 hover:border-blue-500/50 disabled:bg-gray-700/50 disabled:border-gray-600 disabled:cursor-not-allowed text-blue-300 hover:text-blue-200 disabled:text-gray-400 transition-colors"
             >
               {isFastForwardPending ? 'Generating...' : 'Generate Yield'}
             </button>
@@ -318,7 +322,7 @@ const TestingTools: React.FC = () => {
             <button
               onClick={harvestToTurboVault}
               disabled={!safeVaultContract?.address || isHarvesting || isHarvestPending || isHarvestConfirming}
-              className="w-full px-4 py-3 rounded text-sm font-mono bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white transition-colors"
+              className="w-full px-4 py-3 rounded text-sm font-mono bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 hover:border-green-500/50 disabled:bg-gray-700/50 disabled:border-gray-600 disabled:cursor-not-allowed text-green-300 hover:text-green-200 disabled:text-gray-400 transition-colors"
             >
               {isHarvesting || isHarvestPending || isHarvestConfirming ? (
                 isHarvestPending ? 'Submitting...' : isHarvestConfirming ? 'Confirming...' : 'Harvesting...'
@@ -331,12 +335,15 @@ const TestingTools: React.FC = () => {
 
         {/* Status */}
         <div className="bg-gray-900 border border-gray-700 rounded p-4">
-          <h3 className="text-sm font-mono text-white mb-3">STATUS</h3>
+          <div className="mb-3">
+            <h3 className="text-sm font-mono text-white font-semibold mb-1">STATUS</h3>
+            <div className="text-xs text-gray-400 font-mono">System Monitoring</div>
+          </div>
           
           <div className="text-xs text-gray-400 font-mono space-y-2">
             <div>Block: {blockNumber ? Number(blockNumber) : 'N/A'}</div>
             <div>Events: {logs.length}</div>
-            <div className="text-green-400">Monitoring: Active</div>
+            <div className="text-green-300">Monitoring: Active</div>
           </div>
         </div>
       </div>
