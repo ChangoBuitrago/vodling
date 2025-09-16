@@ -514,3 +514,73 @@ input[type="number"] {
 .disconnect-modal {
   animation: slideInDown 0.2s ease-out;
 }
+
+/* Horizontal scrolling for dashboard */
+.dashboard-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 139, 250, 0.3) transparent;
+  scroll-behavior: smooth;
+}
+
+.dashboard-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-thumb {
+  background: rgba(168, 139, 250, 0.3);
+  border-radius: 4px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 139, 250, 0.5);
+}
+
+/* Flow connector styling */
+.flow-connector {
+  position: relative;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(6, 182, 212, 0.3));
+  border-radius: 2px;
+  height: 2px;
+  width: 32px;
+}
+
+.flow-connector::before {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid rgba(6, 182, 212, 0.4);
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+}
+
+/* KPI indicator dots */
+.kpi-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.kpi-indicator.pending {
+  background: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+
+.kpi-indicator.active {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.kpi-indicator.efficiency {
+  background: #f97316;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+}

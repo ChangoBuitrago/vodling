@@ -5,21 +5,19 @@ import { formatEther } from 'ethers';
 
 interface VaultMetrics {
   safeVault: {
-    totalDeposits: string;
-    totalYield: string;
-    stETHShares: string;
-    stETHBalance: string;
+    principalDeposited: string;
+    currentHoldings: string;
+    pendingHarvest: string;
   };
   turboVault: {
-    totalAssets: string;
-    totalSupply: string;
-    shares: string;
-    assetBalance: string;
+    compoundedYield: string;
+    vaultSharesMinted: string;
+    valuePerShare: string;
   };
   mockLido: {
-    totalSupply: string;
-    pooledETH: string;
-    shares: string;
+    totalETHStaked: string;
+    totalStETHMinted: string;
+    exchangeRate: string;
   };
 }
 
@@ -36,21 +34,19 @@ const Dashboard: React.FC = () => {
     if (!metrics) {
       setMetrics({
         safeVault: {
-          totalDeposits: '0.0',
-          totalYield: '0.0',
-          stETHShares: '0.0',
-          stETHBalance: '0.0',
+          principalDeposited: '0.0',
+          currentHoldings: '0.0',
+          pendingHarvest: '0.0',
         },
         turboVault: {
-          totalAssets: '0.0',
-          totalSupply: '0.0',
-          shares: '0.0',
-          assetBalance: '0.0',
+          compoundedYield: '0.0',
+          vaultSharesMinted: '0.0',
+          valuePerShare: '1.0',
         },
         mockLido: {
-          totalSupply: '0.0',
-          pooledETH: '0.0',
-          shares: '0.0',
+          totalETHStaked: '0.0',
+          totalStETHMinted: '0.0',
+          exchangeRate: '1.0',
         }
       });
     }
@@ -140,23 +136,38 @@ const Dashboard: React.FC = () => {
       mockLidoPooledETH
     });
 
+    const principalDeposited = formatEther(typeof safeVaultTotalDeposits === 'bigint' ? safeVaultTotalDeposits : 0n);
+    const totalYield = formatEther(typeof safeVaultTotalYield === 'bigint' ? safeVaultTotalYield : 0n);
+    const currentHoldings = (parseFloat(principalDeposited) + parseFloat(totalYield)).toFixed(6);
+    const pendingHarvest = totalYield; // This is the yield that will move to TurboVault
+
+    const totalETHStaked = formatEther(typeof mockLidoPooledETH === 'bigint' ? mockLidoPooledETH : 0n);
+    const totalStETHMinted = formatEther(typeof mockLidoTotalSupply === 'bigint' ? mockLidoTotalSupply : 0n);
+    const exchangeRate = totalStETHMinted && totalETHStaked && parseFloat(totalStETHMinted) > 0 
+      ? (parseFloat(totalETHStaked) / parseFloat(totalStETHMinted)).toFixed(6)
+      : '1.000000';
+
+    const compoundedYield = formatEther(typeof turboVaultTotalAssets === 'bigint' ? turboVaultTotalAssets : 0n);
+    const vaultSharesMinted = formatEther(typeof turboVaultTotalSupply === 'bigint' ? turboVaultTotalSupply : 0n);
+    const valuePerShare = vaultSharesMinted && compoundedYield && parseFloat(vaultSharesMinted) > 0
+      ? (parseFloat(compoundedYield) / parseFloat(vaultSharesMinted)).toFixed(6)
+      : '1.000000';
+
     setMetrics(prev => ({
       safeVault: {
-        totalDeposits: formatEther(typeof safeVaultTotalDeposits === 'bigint' ? safeVaultTotalDeposits : 0n),
-        totalYield: formatEther(typeof safeVaultTotalYield === 'bigint' ? safeVaultTotalYield : 0n),
-        stETHShares: formatEther(typeof safeVaultStETHShares === 'bigint' ? safeVaultStETHShares : 0n),
-        stETHBalance: formatEther(typeof safeVaultStETHShares === 'bigint' ? safeVaultStETHShares : 0n), // Assuming 1:1 for now
+        principalDeposited,
+        currentHoldings,
+        pendingHarvest,
       },
       turboVault: {
-        totalAssets: formatEther(typeof turboVaultTotalAssets === 'bigint' ? turboVaultTotalAssets : 0n),
-        totalSupply: formatEther(typeof turboVaultTotalSupply === 'bigint' ? turboVaultTotalSupply : 0n),
-        shares: formatEther(typeof turboVaultTotalSupply === 'bigint' ? turboVaultTotalSupply : 0n),
-        assetBalance: formatEther(typeof turboVaultTotalAssets === 'bigint' ? turboVaultTotalAssets : 0n),
+        compoundedYield,
+        vaultSharesMinted,
+        valuePerShare,
       },
       mockLido: {
-        totalSupply: formatEther(typeof mockLidoTotalSupply === 'bigint' ? mockLidoTotalSupply : 0n),
-        pooledETH: formatEther(typeof mockLidoPooledETH === 'bigint' ? mockLidoPooledETH : 0n),
-        shares: formatEther(typeof mockLidoTotalSupply === 'bigint' ? mockLidoTotalSupply : 0n),
+        totalETHStaked,
+        totalStETHMinted,
+        exchangeRate,
       }
     }));
     setLastUpdated(new Date());
@@ -191,8 +202,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-mono text-white">VAULT DASHBOARD</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-sm font-mono text-white">PROTOCOL MONITORING DASHBOARD</h3>
         <div className="flex items-center space-x-2">
           <div className="text-xs text-gray-500 font-mono">
             Last updated: {lastUpdated.toLocaleTimeString()}
@@ -202,109 +213,126 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* SafeVault Metrics - First in flow */}
-        <div className="bg-gray-800 rounded p-3">
-          <div className="text-xs text-gray-400 font-mono mb-2">SAFEVAULT</div>
-          <div className="space-y-1 text-xs font-mono">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Total Deposits:</span>
-              <span className="text-white">{metrics?.safeVault.totalDeposits} ETH</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Total Yield:</span>
-              <span className="text-green-400">{metrics?.safeVault.totalYield} ETH</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">stETH Shares:</span>
-              <span className="text-blue-400">{metrics?.safeVault.stETHShares}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">stETH Balance:</span>
-              <span className="text-blue-400">{metrics?.safeVault.stETHBalance} ETH</span>
-            </div>
-          </div>
-        </div>
 
-        {/* MockLido Metrics - Second in flow */}
-        <div className="bg-gray-800 rounded p-3">
-          <div className="text-xs text-gray-400 font-mono mb-2">MOCKLIDO</div>
-          <div className="space-y-1 text-xs font-mono">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Total Supply:</span>
-              <span className="text-white">{metrics?.mockLido.totalSupply}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Pooled ETH:</span>
-              <span className="text-cyan-400">{metrics?.mockLido.pooledETH} ETH</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Shares:</span>
-              <span className="text-cyan-400">{metrics?.mockLido.shares}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Exchange Rate:</span>
-              <span className="text-cyan-400">
-                {metrics?.mockLido.pooledETH && metrics?.mockLido.totalSupply 
-                  ? (parseFloat(metrics.mockLido.pooledETH) / parseFloat(metrics.mockLido.totalSupply)).toFixed(6)
-                  : '0.000000'
+      {/* System Health Summary */}
+      <div className="mb-6 pb-4 border-b border-gray-700">
+        <div className="text-center">
+          <div className="text-xs text-gray-400 font-mono mb-2">SYSTEM HEALTH INDICATORS</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+            <div className="bg-gray-800/30 rounded p-3">
+              <div className="text-gray-400 mb-1">Yield Generation Rate</div>
+              <div className="text-green-400 text-sm font-bold">
+                {metrics?.mockLido.exchangeRate && parseFloat(metrics.mockLido.exchangeRate) > 1.0
+                  ? `${((parseFloat(metrics.mockLido.exchangeRate) - 1) * 100).toFixed(4)}%`
+                  : '0.0000%'
                 }
-              </span>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* TurboVault Metrics - Third in flow */}
-        <div className="bg-gray-800 rounded p-3">
-          <div className="text-xs text-gray-400 font-mono mb-2">TURBOVAULT</div>
-          <div className="space-y-1 text-xs font-mono">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Total Assets:</span>
-              <span className="text-white">{metrics?.turboVault.totalAssets} ETH</span>
+            <div className="bg-gray-800/30 rounded p-3">
+              <div className="text-gray-400 mb-1">Pending Harvest</div>
+              <div className="text-yellow-400 text-sm font-bold">{metrics?.safeVault.pendingHarvest} ETH</div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Total Supply:</span>
-              <span className="text-purple-400">{metrics?.turboVault.totalSupply}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Shares:</span>
-              <span className="text-purple-400">{metrics?.turboVault.shares}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Asset Balance:</span>
-              <span className="text-white">{metrics?.turboVault.assetBalance} ETH</span>
+            <div className="bg-gray-800/30 rounded p-3">
+              <div className="text-gray-400 mb-1">Compounding Efficiency</div>
+              <div className="text-purple-400 text-sm font-bold">
+                {metrics?.turboVault.valuePerShare && parseFloat(metrics.turboVault.valuePerShare) > 1.0
+                  ? `${((parseFloat(metrics.turboVault.valuePerShare) - 1) * 100).toFixed(4)}%`
+                  : '0.0000%'
+                }
+              </div>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Value Flow Visualization - Horizontal Scrolling */}
+      <div className="overflow-x-auto pb-4 dashboard-scroll">
+        <div className="flex space-x-6 min-w-max">
+          {/* SafeVault Panel */}
+          <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-4 min-w-[320px] flex-shrink-0">
+            <div className="mb-3">
+              <h4 className="text-sm font-mono text-blue-300 font-semibold mb-1">SAFEVAULT</h4>
+              <div className="text-xs text-gray-400 font-mono">User Deposits & Yield Aggregation</div>
+            </div>
+            <div className="space-y-3 text-xs font-mono">
+              <div className="bg-gray-800/50 rounded p-3">
+                <div className="text-gray-400 mb-1">Principal Deposited</div>
+                <div className="text-white text-lg font-bold">{metrics?.safeVault.principalDeposited} ETH</div>
+              </div>
+              <div className="bg-gray-800/50 rounded p-3">
+                <div className="text-gray-400 mb-1">Current Holdings (stETH)</div>
+                <div className="text-blue-300 text-lg font-bold">{metrics?.safeVault.currentHoldings} ETH</div>
+              </div>
+              <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/30 border border-yellow-500/40 rounded p-3">
+              <div className="text-yellow-300 mb-1 flex items-center">
+                <div className="kpi-indicator pending mr-2"></div>
+                PENDING HARVEST (Yield)
+              </div>
+                <div className="text-yellow-200 text-lg font-bold">{metrics?.safeVault.pendingHarvest} ETH</div>
+                <div className="text-xs text-yellow-400 mt-1">This is the value that will move to the TurboVault</div>
+              </div>
+            </div>
+          </div>
 
-      {/* Summary Row */}
-      <div className="mt-4 pt-3 border-t border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
-          <div className="text-center">
-            <div className="text-gray-500">Total System ETH</div>
-            <div className="text-white text-sm">
-              {metrics ? (
-                (parseFloat(metrics.safeVault.totalDeposits) + 
-                 parseFloat(metrics.turboVault.totalAssets) + 
-                 parseFloat(metrics.mockLido.pooledETH)).toFixed(6)
-              ) : '0.000000'} ETH
+          {/* Flow Connector */}
+          <div className="flex items-center justify-center min-w-[60px]">
+            <div className="flow-connector"></div>
+          </div>
+
+          {/* MockLido Panel */}
+          <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-lg p-4 min-w-[320px] flex-shrink-0">
+            <div className="mb-3">
+              <h4 className="text-sm font-mono text-cyan-300 font-semibold mb-1">MOCKLIDO</h4>
+              <div className="text-xs text-gray-400 font-mono">The Staking Engine</div>
+            </div>
+            <div className="space-y-3 text-xs font-mono">
+              <div className="bg-gray-800/50 rounded p-3">
+                <div className="text-gray-400 mb-1">Total ETH Staked</div>
+                <div className="text-white text-lg font-bold">{metrics?.mockLido.totalETHStaked} ETH</div>
+              </div>
+              <div className="bg-gray-800/50 rounded p-3">
+                <div className="text-gray-400 mb-1">Total stETH Minted</div>
+                <div className="text-cyan-300 text-lg font-bold">{metrics?.mockLido.totalStETHMinted} stETH</div>
+              </div>
+              <div className="bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-500/40 rounded p-3">
+              <div className="text-green-300 mb-1 flex items-center">
+                <div className="kpi-indicator active mr-2"></div>
+                Exchange Rate (stETH:ETH)
+              </div>
+                <div className="text-green-200 text-lg font-bold">{metrics?.mockLido.exchangeRate}</div>
+                <div className="text-xs text-green-400 mt-1">This is the key driver of yield</div>
+              </div>
             </div>
           </div>
-          <div className="text-center">
-            <div className="text-gray-500">Generated Yield</div>
-            <div className="text-green-400 text-sm">
-              {metrics?.safeVault.totalYield || '0.000000'} ETH
-            </div>
+
+          {/* Flow Connector */}
+          <div className="flex items-center justify-center min-w-[60px]">
+            <div className="flow-connector"></div>
           </div>
-          <div className="text-center">
-            <div className="text-gray-500">Yield Rate</div>
-            <div className="text-yellow-400 text-sm">
-              {metrics?.safeVault.totalDeposits && metrics?.safeVault.totalYield
-                ? ((parseFloat(metrics.safeVault.totalYield) / parseFloat(metrics.safeVault.totalDeposits)) * 100).toFixed(4)
-                : '0.0000'
-              }%
+
+          {/* TurboVault Panel */}
+          <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-lg p-4 min-w-[320px] flex-shrink-0">
+            <div className="mb-3">
+              <h4 className="text-sm font-mono text-purple-300 font-semibold mb-1">TURBOVAULT</h4>
+              <div className="text-xs text-gray-400 font-mono">The Compounding Engine</div>
+            </div>
+            <div className="space-y-3 text-xs font-mono">
+              <div className="bg-gray-800/50 rounded p-3">
+                <div className="text-gray-400 mb-1">Compounded Yield (stETH)</div>
+                <div className="text-white text-lg font-bold">{metrics?.turboVault.compoundedYield} ETH</div>
+              </div>
+              <div className="bg-gray-800/50 rounded p-3">
+                <div className="text-gray-400 mb-1">Vault Shares Minted</div>
+                <div className="text-purple-300 text-lg font-bold">{metrics?.turboVault.vaultSharesMinted}</div>
+              </div>
+              <div className="bg-gradient-to-r from-orange-900/30 to-orange-800/30 border border-orange-500/40 rounded p-3">
+              <div className="text-orange-300 mb-1 flex items-center">
+                <div className="kpi-indicator efficiency mr-2"></div>
+                Value per Share
+              </div>
+                <div className="text-orange-200 text-lg font-bold">{metrics?.turboVault.valuePerShare}</div>
+                <div className="text-xs text-orange-400 mt-1">This will increase as the TurboVault strategy generates its own yield</div>
+              </div>
             </div>
           </div>
         </div>
