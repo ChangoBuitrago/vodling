@@ -249,7 +249,7 @@ const Dashboard: React.FC = () => {
       <div className="overflow-x-auto pb-4 dashboard-scroll">
         <div className="flex space-x-6 min-w-max">
           {/* SafeVault Panel */}
-          <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-4 min-w-[320px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-lg p-4 w-[350px] flex-shrink-0">
             <div className="mb-3">
               <h4 className="text-sm font-mono text-blue-300 font-semibold mb-1">SAFEVAULT</h4>
               <div className="text-xs text-gray-400 font-mono">User Deposits & Yield Aggregation</div>
@@ -280,7 +280,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* MockLido Panel */}
-          <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-lg p-4 min-w-[320px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-lg p-4 w-[350px] flex-shrink-0">
             <div className="mb-3">
               <h4 className="text-sm font-mono text-cyan-300 font-semibold mb-1">MOCKLIDO</h4>
               <div className="text-xs text-gray-400 font-mono">The Staking Engine</div>
@@ -311,7 +311,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* TurboVault Panel */}
-          <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-lg p-4 min-w-[320px] flex-shrink-0">
+          <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-lg p-4 w-[350px] flex-shrink-0">
             <div className="mb-3">
               <h4 className="text-sm font-mono text-purple-300 font-semibold mb-1">TURBOVAULT</h4>
               <div className="text-xs text-gray-400 font-mono">The Compounding Engine</div>
