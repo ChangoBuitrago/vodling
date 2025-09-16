@@ -199,6 +199,35 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         emit YieldHarvested(block.timestamp, totalYield);
     }
     
+    /**
+     * @dev Public harvest function - allows anyone to harvest yield to TurboVault
+     * This is a public version of harvestAndCompound for testing purposes
+     */
+    function harvestYield() external {
+        uint256 totalYield = this.getTotalYield();
+        require(totalYield > 0, "No yield to harvest");
+        require(turboVault != address(0), "TurboVault not set");
+        
+        // Get current total stETH value and shares
+        uint256 totalStETHShares = lido.sharesOf(address(this));
+        uint256 currentTotalValue = lido.getPooledEthByShares(totalStETHShares);
+        
+        // Calculate yield as a percentage of total shares
+        // yieldShares = (totalYield / currentTotalValue) * totalStETHShares
+        uint256 yieldShares = (totalStETHShares * totalYield) / currentTotalValue;
+        
+        require(yieldShares > 0, "No yield shares to harvest");
+        require(yieldShares <= totalStETHShares, "Yield shares exceed total shares");
+        
+        // Approve TurboVault to spend stETH
+        stETH.approve(turboVault, yieldShares);
+        
+        // Call TurboVault's depositYield function directly
+        ITurboVault(turboVault).depositYield(yieldShares);
+        
+        emit YieldHarvested(block.timestamp, totalYield);
+    }
+    
     // ============ View Functions ============
     
     /**

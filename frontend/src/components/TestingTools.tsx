@@ -163,7 +163,7 @@ const TestingTools: React.FC = () => {
       await writeSafeVault({
         address: safeVaultContract.address as `0x${string}`,
         abi: safeVaultContract?.abi,
-        functionName: 'harvestAndCompound',
+        functionName: 'harvestYield',
       });
       
     } catch (error) {

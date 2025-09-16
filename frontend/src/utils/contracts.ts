@@ -1,25 +1,25 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new getUserActualWithdrawableBalance function
+  LOCAL: '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6', // Local development - updated with harvestYield function
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x0165878a594ca255338adfa4d48449f69242eb8f', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x0165878A594ca255338adfa4d48449f69242Eb8F', // Local development - updated with new deployment
 };
 
 export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0xa513e6e4b8f2a923d98304ec87f64353c4d5c853', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853', // Local development - updated with new deployment
 };
 
 export const TURBO_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x8a791620dd6260079bf849dc5567adc3f2fdc318', // Local development - auto-updated - auto-updated - auto-updated - auto-updated
+  LOCAL: '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318', // Local development - updated with new deployment
 };
 
 export const SAFE_VAULT_ABI = [
@@ -184,6 +184,13 @@ export const SAFE_VAULT_ABI = [
   {
     "inputs": [],
     "name": "harvestAndCompound",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "harvestYield",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
