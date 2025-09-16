@@ -30,7 +30,7 @@ const TestingPage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-4">
           <h2 className="text-sm font-mono text-gray-400 mb-1">YIELD SIMULATION ENVIRONMENT</h2>
           <p className="text-xs text-gray-500 font-mono">
