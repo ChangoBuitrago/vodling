@@ -1,25 +1,25 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9', // Local development - auto-updated - updated with new deployment
+  LOCAL: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9', // Local development - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x5fbdb2315678afecb367f032d93f642f64180aa3', // Local development - auto-updated - updated with new deployment
+  LOCAL: '0x5fbdb2315678afecb367f032d93f642f64180aa3', // Local development - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512', // Local development - auto-updated - updated with new deployment
+  LOCAL: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512', // Local development - auto-updated - auto-updated - updated with new deployment
 };
 
 export const TURBO_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9', // Local development - auto-updated - updated with new deployment
+  LOCAL: '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9', // Local development - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_EIGENLAYER_ADDRESSES = {
@@ -644,6 +644,33 @@ export const TURBO_VAULT_ABI = [
     "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
     "name": "getUserEigenLayerRewards",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalEigenLayerShares",
+    "outputs": [
+      {"internalType": "uint256", "name": "", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getEigenLayerTotalValue",
+    "outputs": [
+      {"internalType": "uint256", "name": "", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getEigenLayerSharesValue",
+    "outputs": [
+      {"internalType": "uint256", "name": "", "type": "uint256"}
+    ],
     "stateMutability": "view",
     "type": "function"
   },

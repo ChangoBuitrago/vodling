@@ -199,9 +199,11 @@ const Dashboard: React.FC = () => {
     // EigenLayer calculations
     const totalStaked = formatEther(eigenLayerState.totalStaked);
     const totalValue = formatEther(eigenLayerState.totalValue);
-    const userShares = formatEther(eigenLayerState.userShares);
-    const userValue = formatEther(eigenLayerState.userValue);
-    const userRewards = formatEther(eigenLayerState.userRewards);
+    
+    // TurboVault holds all EigenLayer shares, not individual users
+    const userShares = '0.0000'; // TurboVault holds all shares
+    const userValue = '0.0000';   // Users don't have direct EigenLayer shares
+    const userRewards = '0.0000'; // Users get rewards through TurboVault shares
     
     // Calculate restaking efficiency: (totalValue - totalStaked) / totalStaked * 100
     const restakingEfficiency = parseFloat(totalStaked) > 0 
@@ -209,11 +211,11 @@ const Dashboard: React.FC = () => {
       : '0.0000';
 
     console.log('Dashboard - EigenLayer Restaking Efficiency Calculation:');
-    console.log(`  - Total Staked: ${totalStaked} ETH`);
-    console.log(`  - Total Value: ${totalValue} ETH`);
-    console.log(`  - User Shares: ${userShares} shares`);
-    console.log(`  - User Value: ${userValue} ETH`);
-    console.log(`  - User Rewards: ${userRewards} ETH`);
+    console.log(`  - TurboVault Total Staked: ${totalStaked} shares`);
+    console.log(`  - TurboVault Total Value: ${totalValue} ETH`);
+    console.log(`  - User Shares: ${userShares} shares (TurboVault holds all)`);
+    console.log(`  - User Value: ${userValue} ETH (users get rewards through TurboVault)`);
+    console.log(`  - User Rewards: ${userRewards} ETH (users get rewards through TurboVault)`);
     console.log(`  - Restaking Efficiency: ${restakingEfficiency}%`);
 
     setMetrics(prev => ({
@@ -421,23 +423,23 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="space-y-1 text-sm font-mono">
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
-                <span className="text-gray-400">Total Staked</span>
-                <span className="text-white font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalStaked, ' ETH')}</span>
+                <span className="text-gray-400">TurboVault Shares</span>
+                <span className="text-white font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalStaked, ' shares')}</span>
+              </div>
+              <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
+                <span className="text-gray-400">Total Value</span>
+                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalValue, ' ETH')}</span>
               </div>
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
                 <span className="text-gray-400">User Shares</span>
-                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userShares, '')}</span>
-              </div>
-              <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
-                <span className="text-gray-400">User Value</span>
-                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userValue, ' ETH')}</span>
+                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userShares, ' (TurboVault holds all)')}</span>
               </div>
               <div className="bg-gradient-to-r from-pink-900/30 to-pink-800/30 border border-pink-500/40 rounded p-3 flex justify-between items-center">
                 <div className="flex items-center whitespace-nowrap">
                   <div className="kpi-indicator efficiency mr-2"></div>
-                  <span className="text-pink-300">User Rewards</span>
+                  <span className="text-pink-300">Restaking Efficiency</span>
                 </div>
-                <span className="text-pink-200 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userRewards, ' ETH')}</span>
+                <span className="text-pink-200 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.restakingEfficiency, '%')}</span>
               </div>
             </div>
           </div>

@@ -20,6 +20,8 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
     /// @dev EigenLayer contract address for restaking
     address public eigenLayer;
     
+    /// @dev Total EigenLayer shares held by this vault
+    uint256 public totalEigenLayerShares;
     
     /// @dev Pause functionality for EigenLayer operations
     bool public eigenLayerPaused;
@@ -79,6 +81,24 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
         return super.asset();
     }
     
+    /**
+     * @dev Get the total value of EigenLayer shares including rewards
+     * @return Total value in stETH terms
+     */
+    function getEigenLayerTotalValue() external view returns (uint256) {
+        if (eigenLayer == address(0) || totalEigenLayerShares == 0) return 0;
+        return IEigenLayer(eigenLayer).getTotalValue();
+    }
+    
+    /**
+     * @dev Get the value of this vault's EigenLayer shares including rewards
+     * @return Value in stETH terms
+     */
+    function getEigenLayerSharesValue() external view returns (uint256) {
+        if (eigenLayer == address(0) || totalEigenLayerShares == 0) return 0;
+        return IEigenLayer(eigenLayer).getSharesValue(totalEigenLayerShares);
+    }
+    
     // ============ EigenLayer Functions ============
     
     /**
@@ -118,6 +138,9 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
         // Stake to EigenLayer
         eigenLayerShares = IEigenLayer(eigenLayer).stake(stETHAmount);
         
+        // Update total EigenLayer shares held by this vault
+        totalEigenLayerShares += eigenLayerShares;
+        
         emit RestakedToEigenLayer(address(this), stETHAmount, eigenLayerShares);
         
         return eigenLayerShares;
@@ -137,6 +160,9 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
         // Unstake from EigenLayer (this will transfer stETH back to this contract)
         stETHAmount = IEigenLayer(eigenLayer).unstake(eigenLayerShares);
         require(stETHAmount > 0, "No value to withdraw");
+        
+        // Update total EigenLayer shares held by this vault
+        totalEigenLayerShares -= eigenLayerShares;
         
         emit WithdrawnFromEigenLayer(address(this), stETHAmount, eigenLayerShares);
         

@@ -137,64 +137,33 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     },
   });
 
-  // EigenLayer contract read hooks
+  // EigenLayer contract read hooks - now reading from TurboVault instead of user-specific
   const { data: eigenLayerTotalStaked = 0n, refetch: refetchEigenLayerTotalStaked } = useContractRead({
-    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
-    abi: mockEigenLayerContract?.abi,
-    functionName: 'totalStaked',
+    address: turboVaultContract?.address as `0x${string}` | undefined,
+    abi: turboVaultContract?.abi,
+    functionName: 'totalEigenLayerShares',
     query: {
-      enabled: !!mockEigenLayerContract?.address,
+      enabled: !!turboVaultContract?.address,
       refetchInterval: false,
       staleTime: 0,
     },
   });
 
   const { data: eigenLayerTotalValue = 0n, refetch: refetchEigenLayerTotalValue } = useContractRead({
-    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
-    abi: mockEigenLayerContract?.abi,
-    functionName: 'getTotalValue',
+    address: turboVaultContract?.address as `0x${string}` | undefined,
+    abi: turboVaultContract?.abi,
+    functionName: 'getEigenLayerSharesValue',
     query: {
-      enabled: !!mockEigenLayerContract?.address,
+      enabled: !!turboVaultContract?.address,
       refetchInterval: false,
       staleTime: 0,
     },
   });
 
-  const { data: eigenLayerUserShares = 0n, refetch: refetchEigenLayerUserShares } = useContractRead({
-    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
-    abi: mockEigenLayerContract?.abi,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!mockEigenLayerContract?.address && !!address,
-      refetchInterval: false,
-      staleTime: 0,
-    },
-  });
-
-  const { data: eigenLayerUserValue = 0n, refetch: refetchEigenLayerUserValue } = useContractRead({
-    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
-    abi: mockEigenLayerContract?.abi,
-    functionName: 'getUserValue',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!mockEigenLayerContract?.address && !!address,
-      refetchInterval: false,
-      staleTime: 0,
-    },
-  });
-
-  const { data: eigenLayerUserRewards = 0n, refetch: refetchEigenLayerUserRewards } = useContractRead({
-    address: mockEigenLayerContract?.address as `0x${string}` | undefined,
-    abi: mockEigenLayerContract?.abi,
-    functionName: 'getUserRewards',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!mockEigenLayerContract?.address && !!address,
-      refetchInterval: false,
-      staleTime: 0,
-    },
-  });
+  // User shares are now 0 since TurboVault holds all EigenLayer shares
+  const eigenLayerUserShares = 0n;
+  const eigenLayerUserValue = 0n;
+  const eigenLayerUserRewards = 0n;
 
   // Update balance state when contract data changes
   React.useEffect(() => {
@@ -386,8 +355,8 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
 
   // Function to manually refresh EigenLayer data
   const refreshEigenLayer = useCallback(async () => {
-    if (!mockEigenLayerContract?.address) {
-      console.log('⚠️ Cannot refresh EigenLayer: missing contract');
+    if (!turboVaultContract?.address) {
+      console.log('⚠️ Cannot refresh EigenLayer: missing TurboVault contract');
       return;
     }
 
@@ -398,32 +367,23 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
       const results = await Promise.all([
         refetchEigenLayerTotalStaked(),
         refetchEigenLayerTotalValue(),
-        refetchEigenLayerUserShares(),
-        refetchEigenLayerUserValue(),
-        refetchEigenLayerUserRewards(),
       ]);
 
       const newTotalStaked = results[0]?.data as bigint;
       const newTotalValue = results[1]?.data as bigint;
-      const newUserShares = results[2]?.data as bigint;
-      const newUserValue = results[3]?.data as bigint;
-      const newUserRewards = results[4]?.data as bigint;
 
       console.log('✅ Web3Context: EigenLayer refresh completed');
-      console.log(`  - New Total Staked: ${formatEther(newTotalStaked || 0n)} ETH`);
+      console.log(`  - New Total Staked: ${formatEther(newTotalStaked || 0n)} shares`);
       console.log(`  - New Total Value: ${formatEther(newTotalValue || 0n)} ETH`);
-      console.log(`  - New User Shares: ${formatEther(newUserShares || 0n)} shares`);
-      console.log(`  - New User Value: ${formatEther(newUserValue || 0n)} ETH`);
-      console.log(`  - New User Rewards: ${formatEther(newUserRewards || 0n)} ETH`);
 
       // Update state with new data
       setEigenLayerState(prev => ({
         ...prev,
         totalStaked: newTotalStaked || 0n,
         totalValue: newTotalValue || 0n,
-        userShares: newUserShares || 0n,
-        userValue: newUserValue || 0n,
-        userRewards: newUserRewards || 0n,
+        userShares: 0n, // TurboVault holds all shares
+        userValue: 0n,   // Users don't have direct EigenLayer shares
+        userRewards: 0n, // Users get rewards through TurboVault shares
         lastUpdated: Date.now(),
       }));
 
@@ -432,7 +392,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [mockEigenLayerContract?.address, refetchEigenLayerTotalStaked, refetchEigenLayerTotalValue, refetchEigenLayerUserShares, refetchEigenLayerUserValue, refetchEigenLayerUserRewards]);
+  }, [turboVaultContract?.address, refetchEigenLayerTotalStaked, refetchEigenLayerTotalValue]);
 
   const contextValue: Web3ContextType = {
     balanceState,
