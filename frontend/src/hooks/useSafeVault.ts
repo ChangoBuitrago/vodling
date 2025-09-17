@@ -43,11 +43,6 @@ export const useSafeVault = () => {
     },
   });
 
-  const { data: ethPrice = 0n } = useContractRead({
-    address: safeVaultContract?.address as `0x${string}` | undefined,
-    abi: safeVaultContract?.abi,
-    functionName: 'getETHPrice',
-  });
 
   const { data: minDeposit = parseEther('0.01') } = useContractRead({
     address: safeVaultContract?.address as `0x${string}` | undefined,
@@ -671,7 +666,6 @@ export const useSafeVault = () => {
     actualWithdrawableBalance,
     totalPrincipal,
     totalYield,
-    ethPrice,
     minDeposit,
     maxDeposit,
     minWithdraw,

@@ -126,7 +126,7 @@ contract MockLido is ERC20, ILido {
         }
         
         // Update the last update time to reflect the fast forward
-        lastUpdateTime = block.timestamp;
+        lastUpdateTime += _seconds;
     }
     
     /**

@@ -1,25 +1,20 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9', // Local development - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x959922be3caee4b8cd9a407cc3ac1c251c2007b1', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x5fbdb2315678afecb367f032d93f642f64180aa3', // Local development - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x9a676e781a523b5d0c0e43731313a708cb607508', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
-export const MOCK_CHAINLINK_ORACLE_ADDRESSES = {
-  MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
-  SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512', // Local development - auto-updated - auto-updated - updated with new deployment
-};
 
 export const TURBO_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9', // Local development - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x9a9f2ccfde556a7e9ff0848998aa4a0cfd8863ae', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_EIGENLAYER_ADDRESSES = {
@@ -32,8 +27,7 @@ export const SAFE_VAULT_ABI = [
   {
     "inputs": [
       {"internalType": "address", "name": "_lido", "type": "address"},
-      {"internalType": "address", "name": "_stETH", "type": "address"},
-      {"internalType": "address", "name": "_ethPriceFeed", "type": "address"}
+      {"internalType": "address", "name": "_stETH", "type": "address"}
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
@@ -56,11 +50,6 @@ export const SAFE_VAULT_ABI = [
   {
     "inputs": [],
     "name": "InvalidAmount",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidPriceFeed",
     "type": "error"
   },
   {
@@ -180,20 +169,6 @@ export const SAFE_VAULT_ABI = [
     "name": "emergencyRecover",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "ethPriceFeed",
-    "outputs": [{"internalType": "contract IChainlinkOracle", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getETHPrice",
-    "outputs": [{"internalType": "int256", "name": "", "type": "int256"}],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -694,6 +669,13 @@ export const TURBO_VAULT_ABI = [
     "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_days", "type": "uint256"}],
+    "name": "generateEigenLayerYield",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ] as const;
 
@@ -933,6 +915,13 @@ export const MOCK_EIGENLAYER_ABI = [
     "name": "userStaked",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_days", "type": "uint256"}],
+    "name": "generateYield",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ] as const;

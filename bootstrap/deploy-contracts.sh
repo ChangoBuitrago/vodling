@@ -78,9 +78,6 @@ try {
         case 'MockLido':
           addresses.MOCK_LIDO = address;
           break;
-        case 'MockChainlinkOracle':
-          addresses.MOCK_CHAINLINK_ORACLE = address;
-          break;
         case 'TurboVault':
           addresses.TURBO_VAULT = address;
           break;
@@ -129,7 +126,6 @@ try {
   console.log('Updated addresses:');
   console.log(\`  SafeVault: \${addresses.SAFE_VAULT}\`);
   console.log(\`  MockLido: \${addresses.MOCK_LIDO}\`);
-  console.log(\`  MockChainlinkOracle: \${addresses.MOCK_CHAINLINK_ORACLE}\`);
   console.log(\`  TurboVault: \${addresses.TURBO_VAULT}\`);
   
 } catch (error) {

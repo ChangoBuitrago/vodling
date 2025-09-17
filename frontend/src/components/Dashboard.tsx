@@ -446,20 +446,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Flow Description */}
-      <div className="mt-6 p-4 bg-gray-800/30 border border-gray-600 rounded-lg">
-        <div className="text-xs text-gray-400 font-mono mb-2">CORRECT YIELD FLOW ARCHITECTURE</div>
-        <div className="text-sm text-gray-300 font-mono leading-relaxed">
-          <p className="mb-2">
-            <span className="text-blue-400">SafeVault</span> protects user principal in Lido (never touched) while harvesting Lido rewards to <span className="text-purple-400">TurboVault</span>. 
-            <span className="text-purple-400">TurboVault</span> serves as a shared reward pool that can be restaked to <span className="text-indigo-400">EigenLayer</span> by admin for additional yield. 
-            Users claim their proportional share of the combined (Lido + EigenLayer) rewards.
-          </p>
-          <p>
-            <span className="text-yellow-400">Key:</span> Principal stays protected in Lido → Only rewards flow through the system → Users get the sum of all rewards.
-          </p>
-        </div>
-      </div>
     </div>
   );
 };

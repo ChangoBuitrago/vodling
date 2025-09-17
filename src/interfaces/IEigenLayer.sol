@@ -10,6 +10,7 @@ interface IEigenLayer {
     function getUserRewards(address user) external view returns (uint256);
     function updateRewards() external;
     function fastForwardTime(uint256 _seconds) external;
+    function generateYield(uint256 _days) external;
     function totalStaked() external view returns (uint256);
     function userStaked(address user) external view returns (uint256);
 }

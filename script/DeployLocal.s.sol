@@ -6,7 +6,6 @@ import "forge-std/console.sol";
 import "../src/SafeVault.sol";
 import "../src/TurboVault.sol";
 import "../src/mocks/MockLido.sol";
-import "../src/mocks/MockChainlinkOracle.sol";
 import "../src/mocks/MockEigenLayer.sol";
 
 contract DeployLocalScript is Script {
@@ -27,8 +26,6 @@ contract DeployLocalScript is Script {
         MockLido mockLido = new MockLido();
         console.log("MockLido deployed at:", address(mockLido));
         
-        MockChainlinkOracle mockPriceFeed = new MockChainlinkOracle();
-        console.log("MockChainlinkOracle deployed at:", address(mockPriceFeed));
         
         MockEigenLayer mockEigenLayer = new MockEigenLayer(address(mockLido));
         console.log("MockEigenLayer deployed at:", address(mockEigenLayer));
@@ -38,8 +35,7 @@ contract DeployLocalScript is Script {
         
         SafeVault safeVault = new SafeVault(
             address(mockLido), // lido
-            address(mockLido), // stETH (same as lido in our mock)
-            address(mockPriceFeed) // ethPriceFeed
+            address(mockLido) // stETH (same as lido in our mock)
         );
         
         console.log("SafeVault deployed at:", address(safeVault));
@@ -78,7 +74,6 @@ contract DeployLocalScript is Script {
         
         console.log("\n=== Deployment Summary ===");
         console.log("MockLido:", address(mockLido));
-        console.log("MockChainlinkOracle:", address(mockPriceFeed));
         console.log("MockEigenLayer:", address(mockEigenLayer));
         console.log("SafeVault:", address(safeVault));
         console.log("TurboVault:", address(turboVault));

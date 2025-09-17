@@ -7,7 +7,6 @@ const StatsCard: React.FC = () => {
   const { 
     totalPrincipal, 
     totalYield, 
-    ethPrice, 
     isLoading 
   } = useSafeVault();
 
@@ -29,8 +28,6 @@ const StatsCard: React.FC = () => {
   const totalPrincipalETH = parseFloat(formatEther(totalPrincipal as bigint));
   const totalYieldETH = parseFloat(formatEther(totalYield as bigint));
   const totalETH = totalPrincipalETH + totalYieldETH;
-  const ethPriceUSD = Number(ethPrice as bigint) / 1e8;
-  const totalValueUSD = totalETH * ethPriceUSD;
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -66,18 +63,10 @@ const StatsCard: React.FC = () => {
             <span className="text-sm text-gray-600">Total Value</span>
           </div>
           <span className="font-medium">
-            ${totalValueUSD.toFixed(2)}
+            {totalETH.toFixed(4)} ETH
           </span>
         </div>
 
-        <div className="border-t pt-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">ETH Price</span>
-            <span className="font-medium">
-              ${ethPriceUSD.toFixed(2)}
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );

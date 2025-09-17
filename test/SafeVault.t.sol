@@ -6,10 +6,8 @@ import "forge-std/console.sol";
 import "../src/SafeVault.sol";
 // ADD THESE IMPORTS
 import "../src/mocks/MockLido.sol";
-import "../src/mocks/MockChainlinkOracle.sol";
 // Keep these interfaces
 import "../src/interfaces/ILido.sol";
-import "../src/interfaces/IChainlinkOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Event definitions for testing
@@ -25,7 +23,6 @@ contract SafeVaultTest is Test, ISafeVaultEvents {
     // CHANGE mockLido and mockStETH declarations
     MockLido public mockLido;
     IERC20 public mockStETH; // Use IERC20 interface
-    MockChainlinkOracle public mockOracle;
     
     address public owner = address(0x1);
     address public user1 = address(0x2);
@@ -37,14 +34,12 @@ contract SafeVaultTest is Test, ISafeVaultEvents {
         // Deploy mock contracts
         mockLido = new MockLido();
         mockStETH = IERC20(address(mockLido)); // The mock is also the stETH token
-        mockOracle = new MockChainlinkOracle();
         
         // Deploy SafeVault
         vm.prank(owner);
         safeVault = new SafeVault(
             address(mockLido),
-            address(mockStETH), // Pass the same address
-            address(mockOracle)
+            address(mockStETH) // Pass the same address
         );
         
         // Fund users and the mock Lido contract so it can handle withdrawals

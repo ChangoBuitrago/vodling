@@ -163,8 +163,24 @@ contract MockEigenLayer is ERC20, Ownable {
         lastUpdateTime += _seconds;
     }
     
+    /**
+     * @dev Generate yield by simulating time passage
+     * This simulates EigenLayer rewards accumulation
+     * @param _days Number of days to simulate
+     */
+    function generateYield(uint256 _days) external {
+        require(_days > 0, "Days must be greater than 0");
+        
+        // Fast forward time to simulate yield generation
+        uint256 secondsToAdd = _days * 1 days;
+        lastUpdateTime += secondsToAdd;
+        
+        emit YieldGenerated(_days, this.getTotalValue());
+    }
+    
     // ============ Events ============
     
     event Staked(address indexed user, uint256 amount, uint256 shares);
     event Unstaked(address indexed user, uint256 amount, uint256 shares);
+    event YieldGenerated(uint256 _days, uint256 totalValue);
 }

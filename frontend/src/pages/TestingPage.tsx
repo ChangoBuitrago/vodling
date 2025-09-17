@@ -1,10 +1,40 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import TestingTools from '../components/TestingTools';
+import { useBlockNumber } from 'wagmi';
+import ProtocolControls from '../components/ProtocolControls';
+import EventLog from '../components/EventLog';
 import Dashboard from '../components/Dashboard';
 import ClaimYield from '../components/ClaimYield';
 
+interface LogEntry {
+  id: string;
+  timestamp: Date;
+  blockNumber: number;
+  type: 'yield_harvested' | 'deposit' | 'test_action' | 'error' | 'admin_action';
+  message: string;
+  data?: any;
+  txHash?: string;
+}
+
 const TestingPage: React.FC = () => {
+  const { data: blockNumber } = useBlockNumber();
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+
+  const addLogEntry = useCallback((log: Omit<LogEntry, 'id' | 'timestamp' | 'blockNumber'>) => {
+    const newLog: LogEntry = {
+      ...log,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      timestamp: new Date(),
+      blockNumber: blockNumber ? Number(blockNumber) : 0,
+    };
+    
+    setLogs(prev => [...prev, newLog]);
+  }, [blockNumber]);
+
+  const clearLogs = useCallback(() => {
+    setLogs([]);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
@@ -39,9 +69,14 @@ const TestingPage: React.FC = () => {
           </p>
         </div>
         
-        {/* Dashboard */}
-        <div className="mb-6">
-          <Dashboard />
+        {/* Dashboard and Protocol Controls - Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2">
+            <Dashboard />
+          </div>
+          <div className="lg:col-span-1">
+            <ProtocolControls logs={logs} addLogEntry={addLogEntry} />
+          </div>
         </div>
         
         {/* Claim Yield Component */}
@@ -49,7 +84,10 @@ const TestingPage: React.FC = () => {
           <ClaimYield />
         </div>
         
-        <TestingTools />
+        {/* Event Log */}
+        <div className="mb-6">
+          <EventLog logs={logs} clearLogs={clearLogs} />
+        </div>
       </div>
     </div>
   );

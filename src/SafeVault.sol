@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/ILido.sol";
-import "./interfaces/IChainlinkOracle.sol";
 import "./interfaces/ITurboVault.sol";
 
 /**
@@ -26,8 +25,6 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     /// @dev stETH token contract
     IERC20 public immutable stETH;
     
-    /// @dev Chainlink price feed for ETH/USD
-    IChainlinkOracle public immutable ethPriceFeed;
     
     /// @dev TurboVault contract address for yield distribution
     address public turboVault;
@@ -67,22 +64,19 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     error InvalidAmount();
     error InsufficientBalance();
     error TransferFailed();
-    error InvalidPriceFeed();
     
     // ============ Constructor ============
     
     constructor(
         address _lido,
-        address _stETH,
-        address _ethPriceFeed
+        address _stETH
     ) Ownable(msg.sender) {
-        if (_lido == address(0) || _stETH == address(0) || _ethPriceFeed == address(0)) {
+        if (_lido == address(0) || _stETH == address(0)) {
             revert InvalidAmount();
         }
         
         lido = ILido(_lido);
         stETH = IERC20(_stETH);
-        ethPriceFeed = IChainlinkOracle(_ethPriceFeed);
     }
     
     // ============ External Functions ============
@@ -320,14 +314,6 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         return 0;
     }
     
-    /**
-     * @dev Get current ETH price from Chainlink
-     * @return ETH price in USD (8 decimals)
-     */
-    function getETHPrice() external view returns (int256) {
-        (, int256 price, , , ) = ethPriceFeed.latestRoundData();
-        return price;
-    }
     
     
     /**

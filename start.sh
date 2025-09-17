@@ -225,9 +225,6 @@ try {
         case 'MockLido':
           addresses.MOCK_LIDO = address;
           break;
-        case 'MockChainlinkOracle':
-          addresses.MOCK_CHAINLINK_ORACLE = address;
-          break;
         case 'TurboVault':
           addresses.TURBO_VAULT = address;
           break;
@@ -276,7 +273,6 @@ try {
   console.log('Updated addresses:');
   console.log(\`  SafeVault: \${addresses.SAFE_VAULT}\`);
   console.log(\`  MockLido: \${addresses.MOCK_LIDO}\`);
-  console.log(\`  MockChainlinkOracle: \${addresses.MOCK_CHAINLINK_ORACLE}\`);
   console.log(\`  TurboVault: \${addresses.TURBO_VAULT}\`);
   
 } catch (error) {
@@ -348,13 +344,11 @@ verify_deployment() {
     
     # Extract addresses using jq
     MOCK_LIDO=$(jq -r '.transactions[] | select(.contractName == "MockLido") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
-    MOCK_CHAINLINK=$(jq -r '.transactions[] | select(.contractName == "MockChainlinkOracle") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
     SAFE_VAULT=$(jq -r '.transactions[] | select(.contractName == "SafeVault") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
     TURBO_VAULT=$(jq -r '.transactions[] | select(.contractName == "TurboVault") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
     
     print_status "Deployed Contract Addresses:"
     echo "  MockLido: $MOCK_LIDO"
-    echo "  MockChainlinkOracle: $MOCK_CHAINLINK"
     echo "  SafeVault: $SAFE_VAULT"
     echo "  TurboVault: $TURBO_VAULT"
     echo

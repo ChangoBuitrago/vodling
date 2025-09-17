@@ -33,6 +33,7 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
     event WithdrawnFromEigenLayer(address indexed user, uint256 stETHAmount, uint256 turboVaultShares);
     event EigenLayerSet(address indexed eigenLayer);
     event EigenLayerPaused(bool paused);
+    event EigenLayerYieldGenerated(uint256 _days);
     
     // ============ Constructor ============
     
@@ -66,11 +67,19 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
     // ============ View Functions ============
     
     /**
-     * @dev Get total assets in the vault
-     * @return Total assets (stETH balance)
+     * @dev Get total assets in the vault including EigenLayer rewards
+     * @return Total assets (stETH balance + EigenLayer rewards)
      */
     function totalAssets() public view override returns (uint256) {
-        return IERC20(asset()).balanceOf(address(this));
+        uint256 stETHBalance = IERC20(asset()).balanceOf(address(this));
+        uint256 eigenLayerValue = 0;
+        
+        // Add EigenLayer rewards if EigenLayer is set and we have shares
+        if (eigenLayer != address(0) && totalEigenLayerShares > 0) {
+            eigenLayerValue = IEigenLayer(eigenLayer).getSharesValue(totalEigenLayerShares);
+        }
+        
+        return stETHBalance + eigenLayerValue;
     }
     
     /**
@@ -167,6 +176,20 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
         emit WithdrawnFromEigenLayer(address(this), stETHAmount, eigenLayerShares);
         
         return stETHAmount;
+    }
+    
+    /**
+     * @dev Generate yield in EigenLayer by simulating time passage
+     * @param _days Number of days to simulate
+     */
+    function generateEigenLayerYield(uint256 _days) external {
+        require(eigenLayer != address(0), "EigenLayer not set");
+        require(_days > 0, "Days must be greater than 0");
+        
+        // Call EigenLayer's generateYield function
+        IEigenLayer(eigenLayer).generateYield(_days);
+        
+        emit EigenLayerYieldGenerated(_days);
     }
     
     

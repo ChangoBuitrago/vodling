@@ -17,12 +17,12 @@ interface LogEntry {
 const TestingTools: React.FC = () => {
   const { address } = useAccount();
   const { safeVaultContract, mockLidoContract, turboVaultContract } = useContract();
-  const { refreshTurboVault, refreshEigenLayer, eigenLayerState } = useWeb3Context();
+  const { refreshTurboVault, refreshEigenLayer } = useWeb3Context();
   const { data: blockNumber } = useBlockNumber();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [isRestaking, setIsRestaking] = useState(false);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isEigenLayerYieldPending, setIsEigenLayerYieldPending] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Read TurboVault total assets to show available for restaking
@@ -35,21 +35,12 @@ const TestingTools: React.FC = () => {
     },
   });
 
-  // Read TurboVault total supply
-  const { data: turboVaultTotalSupply, refetch: refetchTurboVaultSupply } = useReadContract({
-    address: turboVaultContract?.address as `0x${string}` | undefined,
-    abi: turboVaultContract?.abi,
-    functionName: 'totalSupply',
-    query: {
-      enabled: !!turboVaultContract?.address,
-    },
-  });
 
   // Contract write hooks
   const { writeContract: writeSafeVault, data: harvestTxHash, isPending: isHarvestPending } = useWriteContract();
   const { writeContract: writeMockLido, data: fastForwardTx, isPending: isFastForwardPending } = useWriteContract();
   const { writeContract: writeTurboVault, data: restakeTxHash, isPending: isRestakePending } = useWriteContract();
-  const { writeContract: writeTurboVaultWithdraw, data: withdrawTxHash, isPending: isWithdrawPending } = useWriteContract();
+  const { writeContract: writeTurboVaultYield, data: eigenLayerYieldTxHash, isPending: isEigenLayerYieldTxPending } = useWriteContract();
   
   // Wait for transactions
   const { isLoading: isHarvestConfirming } = useWaitForTransactionReceipt({
@@ -64,9 +55,10 @@ const TestingTools: React.FC = () => {
     hash: restakeTxHash,
   });
 
-  const { isLoading: isWithdrawConfirming } = useWaitForTransactionReceipt({
-    hash: withdrawTxHash,
+  const { isLoading: isEigenLayerYieldConfirming } = useWaitForTransactionReceipt({
+    hash: eigenLayerYieldTxHash,
   });
+
 
   // Auto-scroll to bottom when new logs are added
   const scrollToBottom = () => {
@@ -249,8 +241,8 @@ const TestingTools: React.FC = () => {
     setIsRestaking(true);
     
     try {
-      // Restake 50% of available assets to EigenLayer
-      const restakeAmount = turboVaultTotalAssets / 2n;
+      // Restake all available assets to EigenLayer
+      const restakeAmount = turboVaultTotalAssets;
       
       addLogEntry({
         type: 'admin_action',
@@ -276,38 +268,47 @@ const TestingTools: React.FC = () => {
     }
   };
 
-  const withdrawFromEigenLayer = async () => {
-    if (!turboVaultContract?.address) return;
-    
-    setIsWithdrawing(true);
-    
-    try {
-      // Withdraw all EigenLayer shares (this would need to be tracked in a real implementation)
-      const withdrawShares = 1000n; // Mock amount - in real implementation, track EigenLayer shares
-      
-      addLogEntry({
-        type: 'admin_action',
-        message: `Admin withdrawing from EigenLayer...`,
-        data: { action: 'withdraw_start', shares: withdrawShares }
-      });
-      
-      await writeTurboVaultWithdraw({
-        address: turboVaultContract.address as `0x${string}`,
-        abi: turboVaultContract.abi,
-        functionName: 'withdrawFromEigenLayer',
-        args: [withdrawShares],
-      });
-      
-    } catch (error) {
-      console.error('Error withdrawing from EigenLayer:', error);
+  const generateEigenLayerYield = async () => {
+    if (!turboVaultContract?.address) {
       addLogEntry({
         type: 'error',
-        message: `Withdraw failed: ${error instanceof Error ? error.message : String(error)}`,
+        message: 'TurboVault contract not available',
         data: { error: true }
       });
-      setIsWithdrawing(false);
+      return;
+    }
+    
+    setIsEigenLayerYieldPending(true);
+    
+    try {
+      addLogEntry({
+        type: 'test_action',
+        message: 'Generating EigenLayer yield (simulating 7 days)...',
+        data: { action: 'eigenlayer_yield_start' }
+      });
+      
+      console.log('Calling generateEigenLayerYield with args:', [7n]);
+      
+      await writeTurboVaultYield({
+        address: turboVaultContract.address as `0x${string}`,
+        abi: turboVaultContract.abi,
+        functionName: 'generateEigenLayerYield' as any,
+        args: [7n], // 7 days
+      });
+      
+      console.log('generateEigenLayerYield transaction submitted');
+      
+    } catch (error) {
+      console.error('Error generating EigenLayer yield:', error);
+      addLogEntry({
+        type: 'error',
+        message: `EigenLayer yield generation failed: ${error instanceof Error ? error.message : String(error)}`,
+        data: { error: true }
+      });
+      setIsEigenLayerYieldPending(false);
     }
   };
+
 
   // Handle fast forward completion
   useEffect(() => {
@@ -332,8 +333,7 @@ const TestingTools: React.FC = () => {
       // Refresh TurboVault data
       Promise.all([
         refreshTurboVault(),
-        refetchTurboVaultAssets(),
-        refetchTurboVaultSupply()
+        refetchTurboVaultAssets()
       ]).then(() => {
         addLogEntry({
           type: 'test_action',
@@ -351,7 +351,7 @@ const TestingTools: React.FC = () => {
       
       setIsHarvesting(false);
     }
-  }, [harvestTxHash, isHarvestConfirming, isHarvestPending, addLogEntry, refreshTurboVault, refetchTurboVaultAssets, refetchTurboVaultSupply]);
+  }, [harvestTxHash, isHarvestConfirming, isHarvestPending, addLogEntry, refreshTurboVault, refetchTurboVaultAssets]);
 
   // Handle restake transaction completion
   useEffect(() => {
@@ -382,34 +382,35 @@ const TestingTools: React.FC = () => {
     }
   }, [restakeTxHash, isRestakeConfirming, isRestakePending, addLogEntry, refreshTurboVault, refreshEigenLayer]);
 
-  // Handle withdraw transaction completion
+  // Handle EigenLayer yield generation completion
   useEffect(() => {
-    if (withdrawTxHash && !isWithdrawConfirming && !isWithdrawPending) {
+    if (eigenLayerYieldTxHash && !isEigenLayerYieldConfirming && !isEigenLayerYieldTxPending) {
       addLogEntry({
-        type: 'admin_action',
-        message: `✅ EigenLayer assets withdrawn to TurboVault - TX: ${withdrawTxHash.slice(0, 10)}...`,
-        data: { transactionHash: withdrawTxHash }
+        type: 'test_action',
+        message: `✅ EigenLayer yield generated (7 days simulated) - TX: ${eigenLayerYieldTxHash.slice(0, 10)}...`,
+        data: { transactionHash: eigenLayerYieldTxHash }
       });
       
       // Refresh both TurboVault and EigenLayer data
       Promise.all([refreshTurboVault(), refreshEigenLayer()]).then(() => {
         addLogEntry({
-          type: 'admin_action',
-          message: '🔄 Dashboard data refreshed after withdrawal',
-          data: { action: 'dashboard_refresh_withdraw' }
+          type: 'test_action',
+          message: '🔄 Dashboard data refreshed after EigenLayer yield generation',
+          data: { action: 'dashboard_refresh_eigenlayer_yield' }
         });
       }).catch((error) => {
-        console.error('Error refreshing data after withdrawal:', error);
+        console.error('Error refreshing data after EigenLayer yield generation:', error);
         addLogEntry({
           type: 'error',
-          message: `Failed to refresh Dashboard after withdrawal: ${error}`,
+          message: `Failed to refresh Dashboard after EigenLayer yield: ${error}`,
           data: { error: true }
         });
       });
       
-      setIsWithdrawing(false);
+      setIsEigenLayerYieldPending(false);
     }
-  }, [withdrawTxHash, isWithdrawConfirming, isWithdrawPending, addLogEntry, refreshTurboVault, refreshEigenLayer]);
+  }, [eigenLayerYieldTxHash, isEigenLayerYieldConfirming, isEigenLayerYieldTxPending, addLogEntry, refreshTurboVault, refreshEigenLayer]);
+
 
   // Timeout mechanism to prevent operations from getting stuck
   useEffect(() => {
@@ -426,6 +427,22 @@ const TestingTools: React.FC = () => {
       return () => clearTimeout(timeout);
     }
   }, [isHarvesting, addLogEntry]);
+
+  // Timeout mechanism for EigenLayer yield generation
+  useEffect(() => {
+    if (isEigenLayerYieldPending) {
+      const timeout = setTimeout(() => {
+        addLogEntry({
+          type: 'error',
+          message: 'EigenLayer yield generation timeout - transaction may have failed',
+          data: { error: true }
+        });
+        setIsEigenLayerYieldPending(false);
+      }, 30000); // 30 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isEigenLayerYieldPending, addLogEntry]);
 
   const formatLogEntry = (log: LogEntry) => {
     const timeStr = log.timestamp.toISOString().substr(11, 12);
@@ -465,7 +482,6 @@ const TestingTools: React.FC = () => {
   }
 
   const turboVaultAssets = formatEther(turboVaultTotalAssets || 0n);
-  const turboVaultSupply = formatEther(turboVaultTotalSupply || 0n);
   const hasAssetsToRestake = parseFloat(turboVaultAssets) > 0;
 
   return (
@@ -517,13 +533,13 @@ const TestingTools: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Column - Stacked Sections */}
+      {/* Right Column - Unified Controls */}
       <div className="lg:col-span-2 flex flex-col space-y-4">
-        {/* Core Workflow Controls */}
+        {/* Unified Workflow Controls */}
         <div className="bg-gray-900 border border-gray-700 rounded p-4">
           <div className="mb-4">
-            <h3 className="text-sm font-mono text-white font-semibold mb-1">CORE WORKFLOW</h3>
-            <div className="text-xs text-gray-400 font-mono">Generate Yield • Harvest to TurboVault</div>
+            <h3 className="text-sm font-mono text-white font-semibold mb-1">PROTOCOL CONTROLS</h3>
+            <div className="text-xs text-gray-400 font-mono">Generate Yield • Harvest • Restake</div>
           </div>
           
           <div className="space-y-3">
@@ -546,38 +562,6 @@ const TestingTools: React.FC = () => {
                 'Harvest Lido Rewards → TurboVault'
               )}
             </button>
-          </div>
-        </div>
-
-        {/* Admin EigenLayer Controls */}
-        <div className="bg-gray-900 border border-gray-700 rounded p-4">
-          <div className="mb-4">
-            <h3 className="text-sm font-mono text-white font-semibold mb-1">ADMIN CONTROLS</h3>
-            <div className="text-xs text-gray-400 font-mono">TurboVault → EigenLayer Restaking</div>
-            <button
-              onClick={() => {
-                refetchTurboVaultAssets();
-                refetchTurboVaultSupply();
-                refreshEigenLayer();
-                addLogEntry({
-                  type: 'test_action',
-                  message: '🔄 Manually refreshed TurboVault and EigenLayer data',
-                  data: { action: 'manual_refresh' }
-                });
-              }}
-              className="mt-2 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 hover:text-white transition-colors"
-            >
-              Refresh Data
-            </button>
-          </div>
-          
-          <div className="space-y-3">
-            {/* TurboVault Info */}
-            <div className="text-xs text-gray-400 font-mono space-y-1 bg-gray-800/30 rounded p-2">
-              <div>TurboVault Assets: {turboVaultAssets} ETH</div>
-              <div>TurboVault Shares: {turboVaultSupply}</div>
-              <div>EigenLayer Total: {formatEther(eigenLayerState.totalStaked)} ETH</div>
-            </div>
             
             <button
               onClick={restakeToEigenLayer}
@@ -586,16 +570,15 @@ const TestingTools: React.FC = () => {
             >
               {isRestaking || isRestakePending || isRestakeConfirming ? 'Restaking...' : 
                !hasAssetsToRestake ? 'No Assets to Restake' : 
-               'Restake 50% to EigenLayer'}
+               'Restake to EigenLayer'}
             </button>
             
             <button
-              onClick={withdrawFromEigenLayer}
-              disabled={isWithdrawing || isWithdrawPending || isWithdrawConfirming}
-              className="w-full px-4 py-3 rounded text-sm font-mono bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 hover:border-pink-500/50 disabled:bg-gray-700/50 disabled:border-gray-600 disabled:cursor-not-allowed text-pink-300 hover:text-pink-200 disabled:text-gray-400 transition-colors"
+              onClick={generateEigenLayerYield}
+              disabled={!turboVaultContract?.address || isEigenLayerYieldPending || isEigenLayerYieldTxPending || isEigenLayerYieldConfirming}
+              className="w-full px-4 py-3 rounded text-sm font-mono bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 hover:border-purple-500/50 disabled:bg-gray-700/50 disabled:border-gray-600 disabled:cursor-not-allowed text-purple-300 hover:text-purple-200 disabled:text-gray-400 transition-colors"
             >
-              {isWithdrawing || isWithdrawPending || isWithdrawConfirming ? 'Withdrawing...' : 
-               'Withdraw from EigenLayer'}
+              {isEigenLayerYieldPending || isEigenLayerYieldTxPending || isEigenLayerYieldConfirming ? 'Generating...' : 'Generate EigenLayer Yield'}
             </button>
           </div>
         </div>
@@ -618,7 +601,11 @@ const TestingTools: React.FC = () => {
             </div>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></div>
-              <span>EigenLayer: Admin-managed</span>
+              <span>TurboVault → EigenLayer</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-pink-400 rounded-full mr-2"></div>
+              <span>EigenLayer rewards: → TurboVault</span>
             </div>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
