@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { useContract } from '../hooks/useContract';
 import { useWeb3Context } from '../contexts/Web3Context';
+import { useSafeVault } from '../hooks/useSafeVault';
 import { formatEther } from 'ethers';
 
 const ClaimYield: React.FC = () => {
@@ -9,6 +10,7 @@ const ClaimYield: React.FC = () => {
   const { safeVaultContract } = useContract();
   const { writeContract } = useWriteContract();
   const { refreshBalance, refreshTurboVault, refreshEigenLayer, turboVaultState, eigenLayerState } = useWeb3Context();
+  const { refetchAllData } = useSafeVault();
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimableShares, setClaimableShares] = useState<string>('0');
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -97,7 +99,8 @@ const ClaimYield: React.FC = () => {
       await Promise.all([
         refreshBalance(),
         refreshTurboVault(),
-        refreshEigenLayer()
+        refreshEigenLayer(),
+        refetchAllData() // Also refresh SafeVault data for main app components
       ]);
       
       // Show success message
