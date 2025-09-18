@@ -222,13 +222,16 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
         data: { action: 'eigenlayer_harvest_start' }
       });
       
-      // This would call a function to harvest EigenLayer rewards back to TurboVault
-      // For now, we'll simulate this as a test action
+      // Call the correct function: withdrawFromEigenLayer
+      // We need to get the total EigenLayer shares first
+      // For now, we'll use a reasonable amount for testing
+      const sharesToWithdraw = 1000000000000000000n; // 1 share in wei
+      
       await writeEigenLayerHarvest({
         address: turboVaultContract.address as `0x${string}`,
         abi: turboVaultContract.abi,
-        functionName: 'harvestEigenLayerRewards' as any,
-        args: [true], // Add a dummy argument to satisfy TypeScript
+        functionName: 'withdrawFromEigenLayer',
+        args: [sharesToWithdraw],
       });
       
     } catch (error) {
