@@ -83,10 +83,6 @@ export const useSafeVault = () => {
   const [isHarvestPending, setIsHarvestPending] = useState(false);
   const { writeContract: writeHarvest, data: harvestTx, isPending: isHarvestWriting } = useWriteContract();
   
-  // EigenLayer harvest simulation functionality
-  const [isEigenLayerHarvestPending, setIsEigenLayerHarvestPending] = useState(false);
-  const [eigenLayerHarvestTx, setEigenLayerHarvestTx] = useState<string | null>(null);
-  const [isEigenLayerHarvestSuccess, setIsEigenLayerHarvestSuccess] = useState(false);
   
   
 
@@ -112,8 +108,7 @@ export const useSafeVault = () => {
   const isDepositLoading = isDepositPending || isDepositWriting || isDepositConfirming;
   const isWithdrawTotalLoading = isWithdrawTotalPending || isWithdrawTotalWriting || isWithdrawTotalConfirming;
   const isHarvestLoading = isHarvestPending || isHarvestWriting || isHarvestConfirming;
-  const isEigenLayerHarvestLoading = isEigenLayerHarvestPending;
-  const isLoading = isDepositLoading || isWithdrawTotalLoading || isHarvestLoading || isEigenLayerHarvestLoading || balanceLoading;
+  const isLoading = isDepositLoading || isWithdrawTotalLoading || isHarvestLoading || balanceLoading;
 
   // Function to refetch all data - now uses Web3Context
   const refetchAllData = useCallback(async () => {
@@ -567,36 +562,6 @@ export const useSafeVault = () => {
     }
   };
 
-  // Simulation function for EigenLayer harvest (adds rewards to TurboVault)
-  const simulateEigenLayerHarvest = async () => {
-    try {
-      setIsEigenLayerHarvestPending(true);
-      setTransactionError(null);
-      
-      console.log('🌾 Starting EigenLayer harvest simulation...');
-      
-      // Simulate a transaction hash for the simulation
-      const simulatedTxHash = `0x${Math.random().toString(16).substr(2, 40)}`;
-      setEigenLayerHarvestTx(simulatedTxHash);
-      
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate success
-      setIsEigenLayerHarvestSuccess(true);
-      setIsEigenLayerHarvestPending(false);
-      
-      console.log('✅ EigenLayer harvest simulation completed successfully');
-      
-      // Refresh data to show updated balances
-      await refetchAllData();
-      
-    } catch (error) {
-      console.error('❌ EigenLayer harvest simulation failed:', error);
-      setIsEigenLayerHarvestPending(false);
-      setTransactionError('EigenLayer harvest simulation failed');
-    }
-  };
 
   // Reset pending states and refetch data when transactions complete
   useEffect(() => {
@@ -831,7 +796,6 @@ export const useSafeVault = () => {
     deposit,
     withdrawTotal,
     harvestYield,
-    simulateEigenLayerHarvest,
     estimateWithdrawalGas,
     refetchAllData,
     refreshBalance, // Expose Web3Context's refreshBalance function
@@ -839,7 +803,6 @@ export const useSafeVault = () => {
     isDepositLoading,
     isWithdrawTotalLoading,
     isHarvestLoading,
-    isEigenLayerHarvestLoading,
     isDepositWriting,
     isDepositConfirming,
     isWithdrawTotalWriting,
@@ -849,11 +812,9 @@ export const useSafeVault = () => {
     isDepositSuccess,
     isWithdrawTotalSuccess,
     isHarvestSuccess,
-    isEigenLayerHarvestSuccess,
     depositTx,
     withdrawTotalTx,
     harvestTx,
-    eigenLayerHarvestTx,
     // estimatedGasForWithdrawal, // Removed due to viem compatibility issues
     // gasEstimationError, // Removed due to viem compatibility issues
     transactionError,
