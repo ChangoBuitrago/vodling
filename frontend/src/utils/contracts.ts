@@ -1,20 +1,20 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x959922be3caee4b8cd9a407cc3ac1c251c2007b1', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x2e2ed0cfd3ad2f1d34481277b3204d807ca2f8c2', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x9a676e781a523b5d0c0e43731313a708cb607508', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x4c4a2f8c81640e47606d3fd77b353e87ba015584', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 
 export const TURBO_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x9a9f2ccfde556a7e9ff0848998aa4a0cfd8863ae', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0xd8a5a9b31c3c0232e196d518e89fd8bf83acad43', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_EIGENLAYER_ADDRESSES = {

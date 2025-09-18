@@ -175,7 +175,19 @@ contract MockEigenLayer is ERC20, Ownable {
         uint256 secondsToAdd = _days * 1 days;
         lastUpdateTime += secondsToAdd;
         
-        emit YieldGenerated(_days, this.getTotalValue());
+        // Actually generate yield by increasing the total staked amount
+        // This simulates EigenLayer rewards being added to the pool
+        if (totalStaked > 0) {
+            // Calculate yield: 1% per day (same as Lido for consistency)
+            uint256 yieldMultiplier = 1e18 + (1e16 * _days); // 1% per day
+            uint256 newTotalStaked = (totalStaked * yieldMultiplier) / 1e18;
+            
+            // Update total staked with yield
+            totalStaked = newTotalStaked;
+            
+            // Emit event with the actual yield generated
+            emit YieldGenerated(_days, this.getTotalValue());
+        }
     }
     
     // ============ Events ============

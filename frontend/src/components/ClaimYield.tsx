@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { useContract } from '../hooks/useContract';
+import { useWeb3Context } from '../contexts/Web3Context';
 import { formatEther } from 'ethers';
 
 const ClaimYield: React.FC = () => {
   const { address } = useAccount();
   const { safeVaultContract } = useContract();
   const { writeContract } = useWriteContract();
+  const { refreshBalance, refreshTurboVault, refreshEigenLayer } = useWeb3Context();
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimableShares, setClaimableShares] = useState<string>('0');
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [claimSuccess, setClaimSuccess] = useState(false);
 
   // Read claimable yield shares
   const { data: claimableSharesData, refetch: refetchClaimable } = useReadContract({
@@ -82,6 +85,17 @@ const ClaimYield: React.FC = () => {
       
       // Refetch data after successful claim
       await refetchClaimable();
+      
+      // Refresh all global state to update dashboard and other components
+      await Promise.all([
+        refreshBalance(),
+        refreshTurboVault(),
+        refreshEigenLayer()
+      ]);
+      
+      // Show success message
+      setClaimSuccess(true);
+      setTimeout(() => setClaimSuccess(false), 3000); // Hide after 3 seconds
     } catch (error) {
       console.error('Error claiming yield shares:', error);
     } finally {
@@ -173,6 +187,18 @@ const ClaimYield: React.FC = () => {
               </span>
             </div>
           </div>
+
+          {/* Success Message */}
+          {claimSuccess && (
+            <div className="bg-green-900/30 border border-green-500/50 rounded p-3 mb-4">
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                <span className="text-green-300 font-mono text-sm">
+                  ✅ Yield shares claimed successfully! Dashboard updated.
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Claim Button */}
           <button
