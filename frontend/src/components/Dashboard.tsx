@@ -28,6 +28,7 @@ interface VaultMetrics {
     userValue: string;
     userRewards: string;
     restakingEfficiency: string;
+    valuePerShare: string;
   };
 }
 
