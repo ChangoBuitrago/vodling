@@ -6,7 +6,7 @@ import { formatEther } from 'ethers';
 import { useFadeIn, useStaggerChildren } from '../hooks/useAnimations';
 
 const BalanceCard: React.FC = () => {
-  const { isConnected, address } = useAccount();
+  const { isConnected } = useAccount();
   const { 
     isLoading,
     isWithdrawTotalLoading,
