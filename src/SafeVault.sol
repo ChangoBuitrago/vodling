@@ -357,6 +357,29 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
         return 0;
     }
     
+    /**
+     * @dev Get user's total yield value including both Lido and EigenLayer rewards
+     * This is the total value the user is entitled to from all rewards
+     * @param user User address
+     * @return Total yield value in ETH equivalent
+     */
+    function getUserTotalYieldValue(address user) external view returns (uint256) {
+        uint256 userPrincipal = principalBalance[user];
+        if (userPrincipal == 0 || turboVault == address(0)) return 0;
+        
+        uint256 totalPrincipalAmount = totalPrincipal;
+        
+        // Get the total value of all rewards (Lido + EigenLayer) that users are entitled to
+        uint256 totalRewardsValue = ITurboVault(turboVault).convertToAssets(
+            ITurboVault(turboVault).balanceOf(address(this))
+        );
+        
+        // Calculate the user's total entitlement based on their share of the principal
+        uint256 totalEntitlement = (userPrincipal * totalRewardsValue) / totalPrincipalAmount;
+        
+        return totalEntitlement;
+    }
+    
     // ============ Admin Functions ============
     
     /**

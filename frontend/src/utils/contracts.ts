@@ -1,20 +1,20 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x2e2ed0cfd3ad2f1d34481277b3204d807ca2f8c2', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0xc9a43158891282a2b1475592d5719c001986aaec', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x4c4a2f8c81640e47606d3fd77b353e87ba015584', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0xfbc22278a96299d91d41c453234d97b4f5eb9b2d', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 
 export const TURBO_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xd8a5a9b31c3c0232e196d518e89fd8bf83acad43', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x1c85638e118b37167e9298c2268758e058ddfda0', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
 };
 
 export const MOCK_EIGENLAYER_ADDRESSES = {
@@ -216,6 +216,13 @@ export const SAFE_VAULT_ABI = [
   {
     "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
     "name": "getUserYield",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "getUserTotalYieldValue",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"

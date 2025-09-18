@@ -93,7 +93,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const { data: yieldBalance = 0n, refetch: refetchYieldBalance } = useContractRead({
     address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
-    functionName: 'getUserYield',
+    functionName: 'getUserTotalYieldValue',
     args: address ? [address] : undefined,
     query: {
       enabled: !!address && !!safeVaultContract?.address,
