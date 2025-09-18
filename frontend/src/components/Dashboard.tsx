@@ -208,13 +208,17 @@ const Dashboard: React.FC = () => {
     const eigenLayerAPY = parseFloat(totalStaked) > 0 
       ? (((parseFloat(totalValue) - parseFloat(totalStaked)) / parseFloat(totalStaked)) * 100).toFixed(2)
       : '0.00';
+    
+    // Calculate EigenLayer value per share: totalValue / totalStaked
+    // This represents the current value of each EigenLayer share
+    const eigenLayerValuePerShare = parseFloat(totalStaked) > 0 
+      ? (parseFloat(totalValue) / parseFloat(totalStaked)).toFixed(6)
+      : '1.000000';
 
-    console.log('Dashboard - EigenLayer APY Calculation:');
-    console.log(`  - TurboVault Total Staked: ${totalStaked} shares`);
-    console.log(`  - TurboVault Total Value: ${totalValue} ETH`);
-    console.log(`  - User Shares: ${userShares} shares (TurboVault holds all)`);
-    console.log(`  - User Value: ${userValue} ETH (users get rewards through TurboVault)`);
-    console.log(`  - User Rewards: ${userRewards} ETH (users get rewards through TurboVault)`);
+    console.log('Dashboard - EigenLayer Calculations:');
+    console.log(`  - Total Staked: ${totalStaked} shares`);
+    console.log(`  - Total Value: ${totalValue} ETH`);
+    console.log(`  - Value per Share: ${eigenLayerValuePerShare}`);
     console.log(`  - EigenLayer APY: ${eigenLayerAPY}%`);
 
     setMetrics(prev => ({
@@ -241,6 +245,7 @@ const Dashboard: React.FC = () => {
           userValue,
           userRewards,
           restakingEfficiency: eigenLayerAPY,
+          valuePerShare: eigenLayerValuePerShare,
         }
     }));
     setLastUpdated(new Date());
@@ -422,19 +427,19 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="space-y-1 text-sm font-mono">
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
-                <span className="text-gray-400">Total Shares</span>
-                <span className="text-white font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalStaked, ' shares')}</span>
+                <span className="text-gray-400">Restaking Yield</span>
+                <span className="text-white font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalValue, ' ETH')}</span>
               </div>
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
-                <span className="text-gray-400">Total Value</span>
-                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalValue, ' ETH')}</span>
+                <span className="text-gray-400">EigenLayer Shares</span>
+                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalStaked, '')}</span>
               </div>
               <div className="bg-gradient-to-r from-pink-900/30 to-pink-800/30 border border-pink-500/40 rounded p-3 flex justify-between items-center">
                 <div className="flex items-center whitespace-nowrap">
                   <div className="kpi-indicator efficiency mr-2"></div>
-                  <span className="text-pink-300">APY</span>
+                  <span className="text-pink-300">Value per Share</span>
                 </div>
-                <span className="text-pink-200 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.restakingEfficiency, '%')}</span>
+                <span className="text-pink-200 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.valuePerShare, '', true)}</span>
               </div>
             </div>
           </div>
