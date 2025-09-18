@@ -727,7 +727,7 @@ export const useSafeVault = () => {
       
       // Check if this is a user cancellation (don't show error for cancellations)
       const errorMessage = harvestError?.message || '';
-      const errorCode = harvestError?.code?.toString() || '';
+      const errorCode = (harvestError as any)?.code?.toString() || '';
       
       const isUserCancellation = errorCode === '4001' ||
                                 errorMessage.includes('user rejected') || 

@@ -8,7 +8,7 @@ export interface ParsedError {
   shouldShowError: boolean;
 }
 
-export function parseTransactionError(error: any, transactionType: 'deposit' | 'withdraw'): ParsedError {
+export function parseTransactionError(error: any, transactionType: 'deposit' | 'withdraw' | 'harvest'): ParsedError {
   const errorMessage = error?.message || error?.toString() || '';
   const errorCode = error?.code;
 
@@ -40,7 +40,7 @@ export function parseTransactionError(error: any, transactionType: 'deposit' | '
   // General insufficient funds
   if (errorMessage.toLowerCase().includes('insufficient funds') ||
       errorMessage.toLowerCase().includes('insufficient balance')) {
-    const action = transactionType === 'deposit' ? 'deposit' : 'withdraw';
+    const action = transactionType === 'deposit' ? 'deposit' : transactionType === 'withdraw' ? 'withdraw' : 'harvest';
     return {
       message: `Insufficient funds to ${action}. Please check your wallet balance and try a smaller amount.`,
       isUserCancellation: false,
@@ -91,7 +91,7 @@ export function parseTransactionError(error: any, transactionType: 'deposit' | '
       
       // Check if it's an insufficient funds error
       if (reason.toLowerCase().includes('insufficient')) {
-        const action = transactionType === 'deposit' ? 'deposit' : 'withdraw';
+        const action = transactionType === 'deposit' ? 'deposit' : transactionType === 'withdraw' ? 'withdraw' : 'harvest';
         return {
           message: `Insufficient balance to ${action}. Please check your balance and try a smaller amount.`,
           isUserCancellation: false,
@@ -145,7 +145,7 @@ export function parseTransactionError(error: any, transactionType: 'deposit' | '
       
       // Handle specific known error messages
       if (revertReason.toLowerCase().includes('insufficient')) {
-        const action = transactionType === 'deposit' ? 'deposit' : 'withdraw';
+        const action = transactionType === 'deposit' ? 'deposit' : transactionType === 'withdraw' ? 'withdraw' : 'harvest';
         return {
           message: `Insufficient balance to ${action}. Please check your balance and try a smaller amount.`,
           isUserCancellation: false,
@@ -221,7 +221,7 @@ export function parseTransactionError(error: any, transactionType: 'deposit' | '
   }
 
   // Default fallback - show a generic but helpful message
-  const action = transactionType === 'deposit' ? 'deposit' : 'withdrawal';
+  const action = transactionType === 'deposit' ? 'deposit' : transactionType === 'withdraw' ? 'withdrawal' : 'harvest';
   return {
     message: `${action.charAt(0).toUpperCase() + action.slice(1)} failed. Please try again. If the problem persists, please contact support.`,
     isUserCancellation: false,
@@ -232,7 +232,7 @@ export function parseTransactionError(error: any, transactionType: 'deposit' | '
 /**
  * Logs the full technical error for debugging while showing user-friendly message
  */
-export function handleTransactionError(error: any, transactionType: 'deposit' | 'withdraw'): ParsedError {
+export function handleTransactionError(error: any, transactionType: 'deposit' | 'withdraw' | 'harvest'): ParsedError {
   const parsed = parseTransactionError(error, transactionType);
   
   // Always log the full error for debugging
