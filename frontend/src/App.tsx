@@ -10,7 +10,6 @@ import Header from './components/Header';
 import TransactionForm from './components/TransactionForm';
 import BalanceCard from './components/BalanceCard';
 import HarvestButton from './components/HarvestButton';
-import HarvestEigenLayerButton from './components/HarvestEigenLayerButton';
 import TestingPage from './pages/TestingPage';
 import { Web3Provider } from './contexts/Web3Context';
 
@@ -71,7 +70,6 @@ const MainApp: React.FC = () => {
             <BalanceCard />
             <TransactionForm />
             <HarvestButton />
-            <HarvestEigenLayerButton />
           </div>
         </div>
       </main>
