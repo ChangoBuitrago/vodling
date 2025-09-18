@@ -9,6 +9,7 @@ import './App.css';
 import Header from './components/Header';
 import TransactionForm from './components/TransactionForm';
 import BalanceCard from './components/BalanceCard';
+import HarvestButton from './components/HarvestButton';
 import TestingPage from './pages/TestingPage';
 import { Web3Provider } from './contexts/Web3Context';
 
@@ -68,6 +69,7 @@ const MainApp: React.FC = () => {
           <div className="space-y-6">
             <BalanceCard />
             <TransactionForm />
+            <HarvestButton />
           </div>
         </div>
       </main>

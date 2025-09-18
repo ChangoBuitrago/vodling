@@ -79,6 +79,10 @@ export const useSafeVault = () => {
   const { writeContract, data: depositTx, isPending: isDepositWriting } = useWriteContract();
   const { writeContract: writeWithdrawTotal, data: withdrawTotalTx, isPending: isWithdrawTotalWriting } = useWriteContract();
   
+  // Harvest functionality
+  const [isHarvestPending, setIsHarvestPending] = useState(false);
+  const { writeContract: writeHarvest, data: harvestTx, isPending: isHarvestWriting } = useWriteContract();
+  
   
 
   // Wait for transactions
@@ -92,12 +96,18 @@ export const useSafeVault = () => {
     timeout: 60000, // 60 second timeout
   });
 
+  const { isLoading: isHarvestConfirming, isSuccess: isHarvestSuccess, data: harvestReceipt, error: harvestError } = useWaitForTransactionReceipt({
+    hash: harvestTx,
+    timeout: 60000, // 60 second timeout
+  });
+
 
 
   // Combined loading states
   const isDepositLoading = isDepositPending || isDepositWriting || isDepositConfirming;
   const isWithdrawTotalLoading = isWithdrawTotalPending || isWithdrawTotalWriting || isWithdrawTotalConfirming;
-  const isLoading = isDepositLoading || isWithdrawTotalLoading || balanceLoading;
+  const isHarvestLoading = isHarvestPending || isHarvestWriting || isHarvestConfirming;
+  const isLoading = isDepositLoading || isWithdrawTotalLoading || isHarvestLoading || balanceLoading;
 
   // Function to refetch all data - now uses Web3Context
   const refetchAllData = useCallback(async () => {
@@ -498,6 +508,59 @@ export const useSafeVault = () => {
     }
   };
 
+  // Harvest function to move LIDO yield to TurboVault
+  const harvestYield = async () => {
+    let transactionSubmitted = false;
+    
+    try {
+      setIsHarvestPending(true);
+      setTransactionError(null); // Clear any previous error
+      
+      console.log('🌾 Starting harvestYield transaction...');
+      
+      if (!safeVaultContract?.address || !safeVaultContract?.abi) {
+        throw new Error('Contract not available');
+      }
+      
+      // Call the harvestYield function on SafeVault
+      await writeHarvest({
+        address: safeVaultContract.address as `0x${string}`,
+        abi: safeVaultContract.abi,
+        functionName: 'harvestYield',
+      });
+      
+      transactionSubmitted = true;
+      console.log('✅ Harvest transaction submitted successfully');
+      
+    } catch (error) {
+      console.log('🚨 harvestYield caught error:', error);
+      
+      // Check for user cancellation first
+      const errorMessage = (error as any)?.message || '';
+      const errorCode = (error as any)?.code?.toString() || '';
+      
+      const isUserCancellation = errorCode === '4001' ||
+                                errorMessage.includes('user rejected') || 
+                                errorMessage.includes('User denied') ||
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('rejected') ||
+                                errorMessage.includes('denied transaction signature');
+      
+      if (isUserCancellation) {
+        console.log('🚫 User cancelled harvest in catch block - resetting state');
+        setIsHarvestPending(false);
+        setTransactionError(null);
+        throw error; // Re-throw so component can handle it
+      }
+      
+      // Ensure pending state is always reset on any error
+      if (!transactionSubmitted) {
+        setIsHarvestPending(false);
+      }
+      throw error;
+    }
+  };
+
   // Reset pending states and refetch data when transactions complete
   useEffect(() => {
     console.log('🔍 Deposit transaction tracking:');
@@ -635,6 +698,60 @@ export const useSafeVault = () => {
     }
   }, [isWithdrawTotalSuccess, isWithdrawTotalConfirming, withdrawTotalReceipt, withdrawTotalError, withdrawTotalTx, refetchAllData]);
 
+  // Handle harvest transaction success
+  useEffect(() => {
+    console.log('🔍 Harvest transaction tracking:');
+    console.log('  - Harvest success state:', isHarvestSuccess);
+    console.log('  - Harvest confirming:', isHarvestConfirming);
+    console.log('  - Harvest receipt:', harvestReceipt);
+    console.log('  - Harvest error:', harvestError);
+    console.log('  - Harvest tx hash:', harvestTx);
+    
+    // Only refetch data on successful transactions, not on errors or cancellations
+    if (isHarvestSuccess && harvestReceipt) {
+      console.log('✅ Harvest success detected, refetching data...');
+      setIsHarvestPending(false);
+      
+      // Try immediate refetch first
+      refetchAllData();
+      
+      // Also try refetch after delay as backup
+      setTimeout(() => {
+        refetchAllData();
+      }, 2000);
+    }
+    
+    // Handle errors but don't refetch data - just reset loading state
+    if (harvestError) {
+      console.log('❌ Harvest confirmation error:', harvestError);
+      
+      // Check if this is a user cancellation (don't show error for cancellations)
+      const errorMessage = harvestError?.message || '';
+      const errorCode = harvestError?.code?.toString() || '';
+      
+      const isUserCancellation = errorCode === '4001' ||
+                                errorMessage.includes('user rejected') || 
+                                errorMessage.includes('User denied') ||
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('rejected') ||
+                                errorMessage.includes('denied transaction signature');
+      
+      if (!isUserCancellation) {
+        // Use the error parser for consistent user-friendly messages
+        const parsedError = handleTransactionError({ message: errorMessage }, 'harvest');
+        if (parsedError.shouldShowError) {
+          setTransactionError(parsedError.message);
+        }
+      } else {
+        console.log('🚫 User cancelled harvest transaction - not showing error message and resetting state');
+        setTransactionError(null);
+      }
+      
+      // Reset loading state for any confirmation error (including cancellations)
+      setIsHarvestPending(false);
+    }
+  }, [isHarvestSuccess, isHarvestConfirming, harvestReceipt, harvestError, harvestTx, refetchAllData]);
+
   // Add a manual timeout to reset loading state if transaction confirmation takes too long
   useEffect(() => {
     if (withdrawTotalTx && isWithdrawTotalPending) {
@@ -676,20 +793,26 @@ export const useSafeVault = () => {
     // Legacy functions for backward compatibility (will be deprecated)
     deposit,
     withdrawTotal,
+    harvestYield,
     estimateWithdrawalGas,
     refetchAllData,
     refreshBalance, // Expose Web3Context's refreshBalance function
     isLoading,
     isDepositLoading,
     isWithdrawTotalLoading,
+    isHarvestLoading,
     isDepositWriting,
     isDepositConfirming,
     isWithdrawTotalWriting,
     isWithdrawTotalConfirming,
+    isHarvestWriting,
+    isHarvestConfirming,
     isDepositSuccess,
     isWithdrawTotalSuccess,
+    isHarvestSuccess,
     depositTx,
     withdrawTotalTx,
+    harvestTx,
     // estimatedGasForWithdrawal, // Removed due to viem compatibility issues
     // gasEstimationError, // Removed due to viem compatibility issues
     transactionError,
