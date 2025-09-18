@@ -311,7 +311,7 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
       
       setIsEigenLayerYieldPending(false);
     }
-  }, [eigenLayerYieldTxHash, isEigenLayerYieldConfirming, isEigenLayerYieldTxPending, addLogEntry, refreshTurboVault, refreshEigenLayer]);
+  }, [eigenLayerYieldTxHash, isEigenLayerYieldConfirming, isEigenLayerYieldTxPending, isEigenLayerYieldPending, addLogEntry, refreshTurboVault, refreshEigenLayer]);
 
   // Alternative completion check - if transaction hash exists and we're not pending, consider it complete
   useEffect(() => {
