@@ -429,10 +429,6 @@ const Dashboard: React.FC = () => {
                 <span className="text-gray-400">Total Value</span>
                 <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalValue, ' ETH')}</span>
               </div>
-              <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
-                <span className="text-gray-400">User Holdings</span>
-                <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userShares, ' (TurboVault holds all)')}</span>
-              </div>
               <div className="bg-gradient-to-r from-pink-900/30 to-pink-800/30 border border-pink-500/40 rounded p-3 flex justify-between items-center">
                 <div className="flex items-center whitespace-nowrap">
                   <div className="kpi-indicator efficiency mr-2"></div>
