@@ -98,6 +98,7 @@ const Dashboard: React.FC = () => {
           userValue: '0.0',
           userRewards: '0.0',
           restakingEfficiency: '0.0000',
+          valuePerShare: '1.000000',
         }
       });
     }
