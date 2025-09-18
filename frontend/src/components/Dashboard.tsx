@@ -418,11 +418,11 @@ const Dashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-indigo-900/20 to-indigo-800/20 border border-indigo-500/30 rounded-lg p-3 w-[380px] min-w-[380px] flex-shrink-0">
             <div className="mb-2">
               <h4 className="text-sm font-mono text-indigo-300 font-semibold mb-1">EIGENLAYER</h4>
-              <div className="text-xs text-gray-400 font-mono">Admin-managed Restaking</div>
+              <div className="text-xs text-gray-400 font-mono">Restaking Engine</div>
             </div>
             <div className="space-y-1 text-sm font-mono">
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
-                <span className="text-gray-400">TurboVault Shares</span>
+                <span className="text-gray-400">Total Shares</span>
                 <span className="text-white font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalStaked, ' shares')}</span>
               </div>
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
@@ -430,13 +430,13 @@ const Dashboard: React.FC = () => {
                 <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.totalValue, ' ETH')}</span>
               </div>
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
-                <span className="text-gray-400">User Shares</span>
+                <span className="text-gray-400">User Holdings</span>
                 <span className="text-indigo-300 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.userShares, ' (TurboVault holds all)')}</span>
               </div>
               <div className="bg-gradient-to-r from-pink-900/30 to-pink-800/30 border border-pink-500/40 rounded p-3 flex justify-between items-center">
                 <div className="flex items-center whitespace-nowrap">
                   <div className="kpi-indicator efficiency mr-2"></div>
-                  <span className="text-pink-300">Restaking Efficiency</span>
+                  <span className="text-pink-300">APY</span>
                 </div>
                 <span className="text-pink-200 font-bold whitespace-nowrap">{formatValue(metrics?.eigenLayer.restakingEfficiency, '%')}</span>
               </div>
