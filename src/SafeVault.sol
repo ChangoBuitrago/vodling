@@ -303,8 +303,8 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     }
     
     /**
-     * @dev Get total yield available across all users
-     * @return Total yield in ETH equivalent
+     * @dev Get total yield available across all users (Lido only)
+     * @return Total yield in ETH equivalent from Lido
      */
     function getTotalYield() external view returns (uint256) {
         uint256 totalStETHValue = lido.getPooledEthByShares(lido.sharesOf(address(this)));
@@ -312,6 +312,24 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
             return totalStETHValue - totalPrincipal;
         }
         return 0;
+    }
+    
+    /**
+     * @dev Get total yield available across all users including both Lido and EigenLayer rewards
+     * @return Total yield in ETH equivalent from both protocols
+     */
+    function getTotalCombinedYield() external view returns (uint256) {
+        if (turboVault == address(0)) {
+            // If TurboVault not set, return only Lido yield
+            return this.getTotalYield();
+        }
+        
+        // Get total rewards value from TurboVault (includes both Lido + EigenLayer)
+        uint256 totalRewardsValue = ITurboVault(turboVault).convertToAssets(
+            ITurboVault(turboVault).balanceOf(address(this))
+        );
+        
+        return totalRewardsValue;
     }
     
     

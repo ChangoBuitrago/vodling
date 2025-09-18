@@ -36,7 +36,7 @@ export const useSafeVault = () => {
   const { data: totalYield = 0n, refetch: refetchTotalYield } = useContractRead({
     address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
-    functionName: 'getTotalYield',
+    functionName: 'getTotalCombinedYield',
     query: {
       refetchInterval: false, // Disable automatic refetch
       staleTime: 0, // Always consider data stale
