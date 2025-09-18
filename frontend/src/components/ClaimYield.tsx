@@ -8,7 +8,7 @@ const ClaimYield: React.FC = () => {
   const { address } = useAccount();
   const { safeVaultContract } = useContract();
   const { writeContract } = useWriteContract();
-  const { refreshBalance, refreshTurboVault, refreshEigenLayer } = useWeb3Context();
+  const { refreshBalance, refreshTurboVault, refreshEigenLayer, turboVaultState, eigenLayerState } = useWeb3Context();
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimableShares, setClaimableShares] = useState<string>('0');
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -55,6 +55,13 @@ const ClaimYield: React.FC = () => {
       const shares = formatEther(typeof claimableSharesData === 'bigint' ? claimableSharesData : 0n);
       setClaimableShares(shares);
       setLastUpdated(new Date());
+      
+      // Debug: Log claimable shares for troubleshooting
+      console.log('ClaimYield - Claimable shares updated:', {
+        rawShares: claimableSharesData,
+        formattedShares: shares,
+        timestamp: new Date().toISOString()
+      });
     }
   }, [claimableSharesData]);
 
@@ -222,14 +229,25 @@ const ClaimYield: React.FC = () => {
             )}
           </button>
 
+          {/* Debug Panel - Show current state */}
+          <div className="bg-gray-800/50 border border-gray-600/50 rounded p-3">
+            <div className="text-xs text-gray-300 font-mono mb-2">CURRENT STATE</div>
+            <div className="text-xs text-gray-400 font-mono space-y-1">
+              <p>TurboVault Total Assets: {formatValue(formatEther(turboVaultState.totalAssets))} ETH</p>
+              <p>TurboVault Total Supply: {formatValue(formatEther(turboVaultState.totalSupply))} shares</p>
+              <p>EigenLayer Total Value: {formatValue(formatEther(eigenLayerState.totalValue))} ETH</p>
+              <p>EigenLayer Total Staked: {formatValue(formatEther(eigenLayerState.totalStaked))} ETH</p>
+            </div>
+          </div>
+
           {/* Information Panel */}
           <div className="bg-blue-900/20 border border-blue-500/30 rounded p-3">
-            <div className="text-xs text-blue-300 font-mono mb-2">CORRECT YIELD FLOW</div>
+            <div className="text-xs text-blue-300 font-mono mb-2">REWARDS INCLUDED</div>
             <div className="text-xs text-gray-400 font-mono space-y-1">
-              <p>• Principal stays in Lido (never touched)</p>
-              <p>• Lido rewards flow to TurboVault (shared pool)</p>
-              <p>• TurboVault restakes to EigenLayer for additional rewards</p>
-              <p>• You claim your share of (Lido + EigenLayer) rewards</p>
+              <p>• ✅ Lido staking rewards (automatic)</p>
+              <p>• ✅ EigenLayer restaking rewards (if restaked)</p>
+              <p>• ✅ Combined yield from both protocols</p>
+              <p>• 💡 Run "Generate EigenLayer Yield" to add EigenLayer rewards</p>
             </div>
           </div>
         </div>
