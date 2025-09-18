@@ -198,8 +198,6 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     console.log(`  - Yield: ${formatEther(yield_)} ETH`);
     console.log(`  - Total: ${formatEther(total)} ETH`);
     console.log(`  - Actual Withdrawable: ${formatEther(actual)} ETH`);
-    console.log(`  - Raw Yield Value: ${yield_.toString()} wei`);
-    console.log(`  - Raw Principal Value: ${principal.toString()} wei`);
   }, [principalBalance, yieldBalance, actualWithdrawableBalance, address, safeVaultContract?.address]);
 
   // Update TurboVault state when contract data changes
@@ -295,8 +293,6 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
       console.log(`  - New Yield: ${formatEther(newYield || 0n)} ETH`);
       console.log(`  - New Total: ${formatEther(newTotal)} ETH`);
       console.log(`  - New Actual: ${formatEther(newActual || 0n)} ETH`);
-      console.log(`  - Raw New Yield: ${(newYield || 0n).toString()} wei`);
-      console.log(`  - Raw New Principal: ${(newPrincipal || 0n).toString()} wei`);
 
       // Update state with new data
       setBalanceState(prev => ({

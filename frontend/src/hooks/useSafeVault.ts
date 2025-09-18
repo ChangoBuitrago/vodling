@@ -44,6 +44,7 @@ export const useSafeVault = () => {
   });
 
 
+
   const { data: minDeposit = parseEther('0.01') } = useContractRead({
     address: safeVaultContract?.address as `0x${string}` | undefined,
     abi: safeVaultContract?.abi,
