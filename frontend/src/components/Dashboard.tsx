@@ -298,7 +298,7 @@ const Dashboard: React.FC = () => {
       <div className="mb-6 pb-4 border-b border-gray-700">
         <div className="text-center">
           <div className="text-xs text-gray-400 font-mono mb-2">PRINCIPAL PROTECTION + REWARD OPTIMIZATION</div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-mono">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
             <div className="bg-gray-800/30 rounded p-3">
               <div className="text-gray-400 mb-1">Lido APY</div>
               <div className="text-green-400 text-sm font-bold">
@@ -307,10 +307,6 @@ const Dashboard: React.FC = () => {
                   : '0.00%'
                 }
               </div>
-            </div>
-            <div className="bg-gray-800/30 rounded p-3">
-              <div className="text-gray-400 mb-1">Total Rewards</div>
-              <div className="text-yellow-400 text-sm font-bold">{metrics?.safeVault.pendingHarvest} ETH</div>
             </div>
             <div className="bg-gray-800/30 rounded p-3">
               <div className="text-gray-400 mb-1">TurboVault APY</div>
