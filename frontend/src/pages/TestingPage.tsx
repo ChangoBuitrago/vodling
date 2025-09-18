@@ -4,7 +4,6 @@ import { useBlockNumber } from 'wagmi';
 import ProtocolControls from '../components/ProtocolControls';
 import EventLog from '../components/EventLog';
 import Dashboard from '../components/Dashboard';
-import ClaimYield from '../components/ClaimYield';
 
 interface LogEntry {
   id: string;
@@ -77,11 +76,6 @@ const TestingPage: React.FC = () => {
           <div className="lg:col-span-1">
             <ProtocolControls logs={logs} addLogEntry={addLogEntry} />
           </div>
-        </div>
-        
-        {/* Claim Yield Component */}
-        <div className="mb-6">
-          <ClaimYield />
         </div>
         
         {/* Event Log */}
