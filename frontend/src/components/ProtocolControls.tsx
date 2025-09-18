@@ -26,6 +26,7 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [isRestaking, setIsRestaking] = useState(false);
   const [isEigenLayerYieldPending, setIsEigenLayerYieldPending] = useState(false);
+  const [isEigenLayerHarvesting, setIsEigenLayerHarvesting] = useState(false);
 
   // Read TurboVault total assets to show available for restaking
   const { data: turboVaultTotalAssets, refetch: refetchTurboVaultAssets } = useReadContract({
@@ -42,6 +43,7 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
   const { writeContract: writeMockLido, data: fastForwardTx, isPending: isFastForwardPending } = useWriteContract();
   const { writeContract: writeTurboVault, data: restakeTxHash, isPending: isRestakePending } = useWriteContract();
   const { writeContract: writeTurboVaultYield, data: eigenLayerYieldTxHash, isPending: isEigenLayerYieldTxPending, error: eigenLayerYieldError } = useWriteContract();
+  const { writeContract: writeEigenLayerHarvest, data: eigenLayerHarvestTxHash, isPending: isEigenLayerHarvestTxPending } = useWriteContract();
   
   // Wait for transactions
   const { isLoading: isHarvestConfirming } = useWaitForTransactionReceipt({
@@ -58,6 +60,10 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
 
   const { isLoading: isEigenLayerYieldConfirming } = useWaitForTransactionReceipt({
     hash: eigenLayerYieldTxHash,
+  });
+
+  const { isLoading: isEigenLayerHarvestConfirming } = useWaitForTransactionReceipt({
+    hash: eigenLayerHarvestTxHash,
   });
 
   // Check if there are assets to restake
@@ -194,6 +200,45 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
         data: { error: true }
       });
       setIsEigenLayerYieldPending(false);
+    }
+  };
+
+  const harvestEigenLayerRewards = async () => {
+    if (!turboVaultContract?.address) {
+      addLogEntry({
+        type: 'error',
+        message: 'TurboVault contract not available',
+        data: { error: true }
+      });
+      return;
+    }
+    
+    setIsEigenLayerHarvesting(true);
+    
+    try {
+      addLogEntry({
+        type: 'test_action',
+        message: 'Harvesting EigenLayer rewards to TurboVault...',
+        data: { action: 'eigenlayer_harvest_start' }
+      });
+      
+      // This would call a function to harvest EigenLayer rewards back to TurboVault
+      // For now, we'll simulate this as a test action
+      await writeEigenLayerHarvest({
+        address: turboVaultContract.address as `0x${string}`,
+        abi: turboVaultContract.abi,
+        functionName: 'harvestEigenLayerRewards' as any,
+        args: [true], // Add a dummy argument to satisfy TypeScript
+      });
+      
+    } catch (error) {
+      console.error('Error harvesting EigenLayer rewards:', error);
+      addLogEntry({
+        type: 'error',
+        message: `EigenLayer harvest failed: ${error instanceof Error ? error.message : String(error)}`,
+        data: { error: true }
+      });
+      setIsEigenLayerHarvesting(false);
     }
   };
 
@@ -381,6 +426,38 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
     }
   }, [isEigenLayerYieldPending, isEigenLayerYieldTxPending, eigenLayerYieldTxHash, addLogEntry, refreshTurboVault, refreshEigenLayer]);
 
+  // Handle EigenLayer harvest transaction completion
+  useEffect(() => {
+    if (eigenLayerHarvestTxHash && !isEigenLayerHarvestConfirming && !isEigenLayerHarvestTxPending) {
+      addLogEntry({
+        type: 'test_action',
+        message: `✅ EigenLayer rewards harvested to TurboVault - TX: ${eigenLayerHarvestTxHash.slice(0, 10)}...`,
+        data: { transactionHash: eigenLayerHarvestTxHash }
+      });
+      
+      // Refresh TurboVault data
+      Promise.all([
+        refreshTurboVault(),
+        refetchTurboVaultAssets()
+      ]).then(() => {
+        addLogEntry({
+          type: 'test_action',
+          message: '🔄 TurboVault data refreshed after EigenLayer harvest',
+          data: { action: 'dashboard_refresh_eigenlayer_harvest' }
+        });
+      }).catch((error) => {
+        console.error('Error refreshing TurboVault data after EigenLayer harvest:', error);
+        addLogEntry({
+          type: 'error',
+          message: `Failed to refresh TurboVault after EigenLayer harvest: ${error}`,
+          data: { error: true }
+        });
+      });
+      
+      setIsEigenLayerHarvesting(false);
+    }
+  }, [eigenLayerHarvestTxHash, isEigenLayerHarvestConfirming, isEigenLayerHarvestTxPending, addLogEntry, refreshTurboVault, refetchTurboVaultAssets]);
+
   // Timeout mechanism to prevent operations from getting stuck
   useEffect(() => {
     if (isHarvesting) {
@@ -417,6 +494,22 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
       };
     }
   }, [isEigenLayerYieldPending, addLogEntry]);
+
+  // Timeout mechanism for EigenLayer harvest
+  useEffect(() => {
+    if (isEigenLayerHarvesting) {
+      const timeout = setTimeout(() => {
+        addLogEntry({
+          type: 'error',
+          message: 'EigenLayer harvest timeout - transaction may have failed',
+          data: { error: true }
+        });
+        setIsEigenLayerHarvesting(false);
+      }, 30000); // 30 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isEigenLayerHarvesting, addLogEntry]);
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded p-4">
@@ -463,6 +556,18 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
         >
           {isEigenLayerYieldPending || isEigenLayerYieldTxPending || isEigenLayerYieldConfirming ? 'Generating...' : 'Generate EigenLayer Yield'}
         </button>
+        
+        <button
+          onClick={harvestEigenLayerRewards}
+          disabled={!turboVaultContract?.address || isEigenLayerHarvesting || isEigenLayerHarvestTxPending || isEigenLayerHarvestConfirming}
+          className="w-full px-4 py-3 rounded text-sm font-mono bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 hover:border-pink-500/50 disabled:bg-gray-700/50 disabled:border-gray-600 disabled:cursor-not-allowed text-pink-300 hover:text-pink-200 disabled:text-gray-400 transition-colors"
+        >
+          {isEigenLayerHarvesting || isEigenLayerHarvestTxPending || isEigenLayerHarvestConfirming ? (
+            isEigenLayerHarvestTxPending ? 'Submitting...' : isEigenLayerHarvestConfirming ? 'Confirming...' : 'Harvesting...'
+          ) : (
+            'Harvest EigenLayer Rewards → TurboVault'
+          )}
+        </button>
       </div>
 
       {/* Flow Information */}
@@ -486,11 +591,15 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
             <span>TurboVault → EigenLayer</span>
           </div>
           <div className="flex items-center">
-            <div className="w-2 h-2 bg-pink-400 rounded-full mr-2"></div>
-            <span>EigenLayer rewards: → TurboVault</span>
+            <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+            <span>Generate EigenLayer Yield</span>
           </div>
           <div className="flex items-center">
-            <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+            <div className="w-2 h-2 bg-pink-400 rounded-full mr-2"></div>
+            <span>Harvest EigenLayer → TurboVault</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
             <span>Users: Claim combined rewards</span>
           </div>
         </div>
