@@ -245,40 +245,6 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
     }
   };
 
-  const checkEigenLayerSetup = async () => {
-    if (!turboVaultContract?.address) {
-      addLogEntry({
-        type: 'error',
-        message: 'TurboVault contract not available',
-        data: { error: true }
-      });
-      return;
-    }
-    
-    try {
-      addLogEntry({
-        type: 'test_action',
-        message: 'Checking EigenLayer setup...',
-        data: { action: 'check_eigenlayer_setup' }
-      });
-      
-      // For now, just log that we're checking
-      console.log('Checking EigenLayer setup for TurboVault:', turboVaultContract.address);
-      addLogEntry({
-        type: 'test_action',
-        message: '🔍 Check the console for EigenLayer address details',
-        data: { action: 'check_eigenlayer_setup' }
-      });
-      
-    } catch (error) {
-      console.error('Error checking EigenLayer setup:', error);
-      addLogEntry({
-        type: 'error',
-        message: `EigenLayer setup check failed: ${error instanceof Error ? error.message : String(error)}`,
-        data: { error: true }
-      });
-    }
-  };
 
   // Handle fast forward completion
   useEffect(() => {
@@ -557,13 +523,6 @@ const ProtocolControls: React.FC<ProtocolControlsProps> = ({ logs, addLogEntry }
       </div>
       
       <div className="space-y-3">
-        <button
-          onClick={checkEigenLayerSetup}
-          className="w-full px-4 py-2 rounded text-xs font-mono bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 hover:border-yellow-500/50 text-yellow-300 hover:text-yellow-200 transition-colors"
-        >
-          🔍 Check EigenLayer Setup
-        </button>
-        
         <button
           onClick={generateYield}
           disabled={!mockLidoContract?.address || isFastForwardPending}
