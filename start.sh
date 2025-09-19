@@ -225,6 +225,9 @@ try {
         case 'MockLido':
           addresses.MOCK_LIDO = address;
           break;
+        case 'MockEigenLayer':
+          addresses.MOCK_EIGENLAYER = address;
+          break;
         case 'TurboVault':
           addresses.TURBO_VAULT = address;
           break;
@@ -259,6 +262,13 @@ try {
     );
   }
   
+  if (addresses.MOCK_EIGENLAYER) {
+    contractsContent = contractsContent.replace(
+      /(MOCK_EIGENLAYER_ADDRESSES = \{[\s\S]*?LOCAL: ')0x[a-fA-F0-9]+('.*?\/\/ Local development).*?/,
+      \`\$1\${addresses.MOCK_EIGENLAYER}\$2 - auto-updated\`
+    );
+  }
+  
   if (addresses.TURBO_VAULT) {
     contractsContent = contractsContent.replace(
       /(TURBO_VAULT_ADDRESSES = \{[\s\S]*?LOCAL: ')0x[a-fA-F0-9]+('.*?\/\/ Local development).*?/,
@@ -273,6 +283,7 @@ try {
   console.log('Updated addresses:');
   console.log(\`  SafeVault: \${addresses.SAFE_VAULT}\`);
   console.log(\`  MockLido: \${addresses.MOCK_LIDO}\`);
+  console.log(\`  MockEigenLayer: \${addresses.MOCK_EIGENLAYER}\`);
   console.log(\`  TurboVault: \${addresses.TURBO_VAULT}\`);
   
 } catch (error) {
@@ -344,17 +355,19 @@ verify_deployment() {
     
     # Extract addresses using jq
     MOCK_LIDO=$(jq -r '.transactions[] | select(.contractName == "MockLido") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
+    MOCK_EIGENLAYER=$(jq -r '.transactions[] | select(.contractName == "MockEigenLayer") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
     SAFE_VAULT=$(jq -r '.transactions[] | select(.contractName == "SafeVault") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
     TURBO_VAULT=$(jq -r '.transactions[] | select(.contractName == "TurboVault") | .contractAddress' "$DEPLOYMENT_FILE" | head -1)
     
     print_status "Deployed Contract Addresses:"
     echo "  MockLido: $MOCK_LIDO"
+    echo "  MockEigenLayer: $MOCK_EIGENLAYER"
     echo "  SafeVault: $SAFE_VAULT"
     echo "  TurboVault: $TURBO_VAULT"
     echo
     
     # Check if addresses are valid
-    if [ "$MOCK_LIDO" = "null" ] || [ "$SAFE_VAULT" = "null" ] || [ "$TURBO_VAULT" = "null" ]; then
+    if [ "$MOCK_LIDO" = "null" ] || [ "$MOCK_EIGENLAYER" = "null" ] || [ "$SAFE_VAULT" = "null" ] || [ "$TURBO_VAULT" = "null" ]; then
         print_error "Some contracts were not deployed properly"
         exit 1
     fi
@@ -387,6 +400,20 @@ verify_deployment() {
         exit 1
     fi
     
+    # Verify TurboVault is linked to MockEigenLayer
+    print_status "Verifying TurboVault -> MockEigenLayer connection..."
+    EIGENLAYER_IN_TURBO_VAULT=$(cast call "$TURBO_VAULT" "eigenLayer()" --rpc-url http://localhost:8545)
+    # Remove padding from the returned address
+    EIGENLAYER_IN_TURBO_VAULT_CLEAN=$(echo "$EIGENLAYER_IN_TURBO_VAULT" | sed 's/^0x000000000000000000000000/0x/')
+    if [ "$EIGENLAYER_IN_TURBO_VAULT_CLEAN" = "$MOCK_EIGENLAYER" ]; then
+        print_success "TurboVault is properly linked to MockEigenLayer"
+    else
+        print_error "TurboVault is not linked to MockEigenLayer"
+        echo "  Expected: $MOCK_EIGENLAYER"
+        echo "  Actual: $EIGENLAYER_IN_TURBO_VAULT_CLEAN"
+        exit 1
+    fi
+    
     # Check MockLido balance
     print_status "Checking MockLido ETH balance..."
     MOCK_LIDO_BALANCE=$(cast balance "$MOCK_LIDO" --rpc-url http://localhost:8545)
@@ -407,6 +434,12 @@ verify_deployment() {
         print_success "MockLido address is updated in frontend"
     else
         print_warning "MockLido address may not be updated in frontend"
+    fi
+    
+    if grep -q "$MOCK_EIGENLAYER" "$FRONTEND_CONTRACTS"; then
+        print_success "MockEigenLayer address is updated in frontend"
+    else
+        print_warning "MockEigenLayer address may not be updated in frontend"
     fi
     
     if grep -q "$TURBO_VAULT" "$FRONTEND_CONTRACTS"; then
