@@ -32,6 +32,9 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     /// @dev Total principal deposited by all users
     uint256 public totalPrincipal;
     
+    /// @dev Total original principal staked to Lido (in wei) - for yield calculation
+    uint256 public totalStakedPrincipal;
+    
     /// @dev Mapping of user address to their principal balance
     mapping(address => uint256) public principalBalance;
     
@@ -53,6 +56,7 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     // ============ Events ============
     
     event Deposit(address indexed user, uint256 amount, uint256 stETHShares);
+    event StakeToLido(address indexed user, uint256 amount, uint256 stETHShares);
     event WithdrawPrincipal(address indexed user, uint256 amount, uint256 stETHShares);
     event WithdrawTotal(address indexed user, uint256 amount, uint256 stETHShares);
     event LimitsUpdated(uint256 minDeposit, uint256 maxDeposit);
@@ -82,22 +86,39 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
     // ============ External Functions ============
     
     /**
-     * @dev Deposit ETH and stake via Lido
+     * @dev Deposit ETH without staking to Lido
      * Uses msg.value as the deposit amount
      */
     function deposit() external payable nonReentrant whenNotPaused {
         uint256 amount = msg.value;
         if (amount < minDeposit || amount > maxDeposit) revert InvalidAmount();
         
+        // Just hold the ETH without staking to Lido
+        // Update user's principal balance
+        principalBalance[msg.sender] = principalBalance[msg.sender] + amount;
+        totalPrincipal = totalPrincipal + amount;
+        
+        emit Deposit(msg.sender, amount, 0); // 0 stETH shares since we're not staking yet
+    }
+    
+    /**
+     * @dev Stake deposited ETH to Lido
+     * @param amount Amount of ETH to stake to Lido
+     */
+    function stakeToLido(uint256 amount) external nonReentrant whenNotPaused {
+        if (amount == 0) revert InvalidAmount();
+        if (principalBalance[msg.sender] < amount) revert InsufficientBalance();
+        
         // Stake ETH with Lido
         uint256 stETHSharesReceived = lido.submit{value: amount}(address(0));
         
-        // Update user's principal balance and track their stETH shares
-        principalBalance[msg.sender] = principalBalance[msg.sender] + amount;
+        // Update tracking
+        principalBalance[msg.sender] = principalBalance[msg.sender] - amount;
         userStETHShares[msg.sender] = userStETHShares[msg.sender] + stETHSharesReceived;
-        totalPrincipal = totalPrincipal + amount;
+        totalPrincipal = totalPrincipal - amount;
+        totalStakedPrincipal = totalStakedPrincipal + amount;
         
-        emit Deposit(msg.sender, amount, stETHSharesReceived);
+        emit StakeToLido(msg.sender, amount, stETHSharesReceived);
     }
     
     /**
@@ -308,8 +329,8 @@ contract SafeVault is ReentrancyGuard, Pausable, Ownable {
      */
     function getTotalYield() external view returns (uint256) {
         uint256 totalStETHValue = lido.getPooledEthByShares(lido.sharesOf(address(this)));
-        if (totalStETHValue > totalPrincipal) {
-            return totalStETHValue - totalPrincipal;
+        if (totalStETHValue > totalStakedPrincipal) {
+            return totalStETHValue - totalStakedPrincipal;
         }
         return 0;
     }

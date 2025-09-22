@@ -8,6 +8,7 @@ interface VaultMetrics {
   safeVault: {
     principalDeposited: string;
     currentHoldings: string;
+    userStETHShares: string;
     pendingHarvest: string;
   };
   turboVault: {
@@ -78,6 +79,7 @@ const Dashboard: React.FC = () => {
         safeVault: {
           principalDeposited: '0.0',
           currentHoldings: '0.0',
+          userStETHShares: '0.0',
           pendingHarvest: '0.0',
         },
         turboVault: {
@@ -165,6 +167,7 @@ const Dashboard: React.FC = () => {
     const principalDeposited = formatEther(typeof safeVaultTotalDeposits === 'bigint' ? safeVaultTotalDeposits : 0n);
     const totalYield = formatEther(typeof safeVaultTotalYield === 'bigint' ? safeVaultTotalYield : 0n);
     const currentHoldings = (parseFloat(principalDeposited) + parseFloat(totalYield)).toFixed(6);
+    const userStETHShares = formatEther(typeof safeVaultStETHShares === 'bigint' ? safeVaultStETHShares : 0n);
     const pendingHarvest = totalYield; // This is the yield that will move to TurboVault
 
     const totalETHStaked = formatEther(typeof mockLidoPooledETH === 'bigint' ? mockLidoPooledETH : 0n);
@@ -227,6 +230,7 @@ const Dashboard: React.FC = () => {
       safeVault: {
         principalDeposited,
         currentHoldings,
+        userStETHShares,
         pendingHarvest,
       },
         turboVault: {
@@ -341,6 +345,10 @@ const Dashboard: React.FC = () => {
               <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
                 <span className="text-gray-400">Current Holdings</span>
                 <span className="text-blue-300 font-bold whitespace-nowrap">{formatValue(metrics?.safeVault.currentHoldings, ' ETH')}</span>
+              </div>
+              <div className="bg-gray-800/50 rounded p-3 flex justify-between items-center">
+                <span className="text-gray-400">Your stETH Shares</span>
+                <span className="text-cyan-300 font-bold whitespace-nowrap">{formatValue(metrics?.safeVault.userStETHShares, ' stETH')}</span>
               </div>
               <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/30 border border-yellow-500/40 rounded p-3 flex justify-between items-center">
                 <div className="flex items-center whitespace-nowrap">

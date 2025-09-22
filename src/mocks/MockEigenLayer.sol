@@ -67,16 +67,27 @@ contract MockEigenLayer is ERC20, Ownable {
         // Update rewards before unstaking
         _updateRewards();
         
-        // Calculate stETH amount (1:1 ratio for simplicity)
-        amount = shares;
-        require(userStaked[msg.sender] >= amount, "Insufficient staked amount");
+        // Calculate the original staked amount for these shares
+        uint256 userTotalShares = balanceOf(msg.sender);
+        uint256 originalStakedAmount;
+        if (userTotalShares > 0) {
+            originalStakedAmount = (userStaked[msg.sender] * shares) / userTotalShares;
+        } else {
+            // If withdrawing all shares, use the full original staked amount
+            originalStakedAmount = userStaked[msg.sender];
+        }
+        
+        // For this mock implementation, we only return the original staked amount
+        // The yield is represented by the increased share value, not additional stETH
+        amount = originalStakedAmount;
+        require(amount > 0, "No value to withdraw");
         
         // Burn shares
         _burn(msg.sender, shares);
         
         // Update tracking
-        userStaked[msg.sender] -= amount;
-        totalStaked -= amount;
+        userStaked[msg.sender] -= originalStakedAmount;
+        totalStaked -= originalStakedAmount;
         
         // Transfer stETH back to user
         require(stETH.transfer(msg.sender, amount), "Transfer failed");

@@ -34,6 +34,7 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
     event EigenLayerSet(address indexed eigenLayer);
     event EigenLayerPaused(bool paused);
     event EigenLayerYieldGenerated(uint256 _days);
+    event RewardsDistributedToSafeVault(address indexed to, uint256 amount);
     
     // ============ Constructor ============
     
@@ -192,6 +193,20 @@ contract TurboVault is ERC4626, Ownable, ReentrancyGuard {
         emit EigenLayerYieldGenerated(_days);
     }
     
+    /**
+     * @dev Distribute compounded rewards back to SafeVault
+     * This completes the full cycle: SafeVault -> TurboVault -> EigenLayer -> TurboVault -> SafeVault
+     * @param amount Amount of stETH to distribute back to SafeVault
+     */
+    function distributeRewardsToSafeVault(uint256 amount) external onlyOwner nonReentrant {
+        require(amount > 0, "Amount must be greater than 0");
+        require(amount <= IERC20(asset()).balanceOf(address(this)), "Insufficient balance");
+        
+        // Transfer stETH back to SafeVault
+        require(IERC20(asset()).transfer(msg.sender, amount), "Transfer failed");
+        
+        emit RewardsDistributedToSafeVault(msg.sender, amount);
+    }
     
     // ============ Modifiers ============
     

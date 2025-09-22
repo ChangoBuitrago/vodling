@@ -1,26 +1,26 @@
 export const SAFE_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0xaa292e8611adf267e563f334ee42320ac96d0463', // Local development - auto-updated - updated with complete cycle contract
 };
 
 export const MOCK_LIDO_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x5fbdb2315678afecb367f032d93f642f64180aa3', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0xa4899d35897033b927acfcf422bc745916139776', // Local development - auto-updated - updated with complete cycle contract
 };
 
 
 export const TURBO_VAULT_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Update after deployment
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Update after deployment
-  LOCAL: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9', // Local development - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - auto-updated - updated with new deployment
+  LOCAL: '0x5c74c94173f05da1720953407cbb920f3df9f887', // Local development - auto-updated - updated with complete cycle contract
 };
 
 export const MOCK_EIGENLAYER_ADDRESSES = {
   MAINNET: '0x0000000000000000000000000000000000000000', // Not used on mainnet
   SEPOLIA: '0x0000000000000000000000000000000000000000', // Not used on sepolia
-  LOCAL: '0x4c5859f0F772848b2D91F1D83E2Fe57935348029', // Local development - updated with new deployment
+  LOCAL: '0xf953b3a269d80e3eb0f2947630da976b896a8c5b', // Local development - auto-updated - updated with complete cycle contract
 };
 
 export const SAFE_VAULT_ABI = [
@@ -155,10 +155,27 @@ export const SAFE_VAULT_ABI = [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "stETHShares", "type": "uint256"}
+    ],
+    "name": "StakeToLido",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "deposit",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "name": "stakeToLido",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -535,6 +552,59 @@ export const TURBO_VAULT_ABI = [
   {
     "anonymous": false,
     "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "shares", "type": "uint256"}
+    ],
+    "name": "RestakedToEigenLayer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "stETHAmount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "turboVaultShares", "type": "uint256"}
+    ],
+    "name": "WithdrawnFromEigenLayer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "eigenLayer", "type": "address"}
+    ],
+    "name": "EigenLayerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "bool", "name": "paused", "type": "bool"}
+    ],
+    "name": "EigenLayerPaused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "_days", "type": "uint256"}
+    ],
+    "name": "EigenLayerYieldGenerated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "to", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "RewardsDistributedToSafeVault",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
       {"indexed": true, "internalType": "address", "name": "owner", "type": "address"},
       {"indexed": true, "internalType": "address", "name": "spender", "type": "address"},
       {"indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}
@@ -602,7 +672,7 @@ export const TURBO_VAULT_ABI = [
     "type": "function"
   },
   {
-    "inputs": [{"internalType": "uint256", "name": "shares", "type": "uint256"}],
+    "inputs": [{"internalType": "uint256", "name": "stETHAmount", "type": "uint256"}],
     "name": "restakeToEigenLayer",
     "outputs": [{"internalType": "uint256", "name": "eigenLayerShares", "type": "uint256"}],
     "stateMutability": "nonpayable",
@@ -687,6 +757,13 @@ export const TURBO_VAULT_ABI = [
   {
     "inputs": [{"internalType": "uint256", "name": "_days", "type": "uint256"}],
     "name": "generateEigenLayerYield",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "name": "distributeRewardsToSafeVault",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

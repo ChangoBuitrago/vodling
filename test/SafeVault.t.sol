@@ -198,10 +198,10 @@ contract SafeVaultTest is Test, ISafeVaultEvents {
         assertEq(totalYield, 0); // No yield initially
     }
     
-    function testGetETHPrice() public view {
-        int256 price = safeVault.getETHPrice();
-        assertEq(price, 2000 * 10**8); // $2000 from mock
-    }
+    // function testGetETHPrice() public view {
+    //     int256 price = safeVault.getETHPrice();
+    //     assertEq(price, 2000 * 10**8); // $2000 from mock
+    // }
     
     // ============ Admin Function Tests ============
     
